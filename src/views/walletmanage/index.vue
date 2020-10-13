@@ -1,0 +1,209 @@
+<template>
+  <div class="manage-wallet">
+    <van-nav-bar :title="$route.query.switch?'选择钱包':'钱包管理'" @click-left="$router.back()" left-arrow>
+      <van-icon name="plus" class="icon"  size="20" slot="right" @click="Popupbox = true" />
+    </van-nav-bar>
+    <van-tabs v-model="walletType" @change="changeWallet">
+      <van-tab :name="token" v-for="token in tokenList" :key="token">
+        <template #title> <img class="token-logo" :src="require(`@/assets/images/token_logo/${token}.png`)"> </template>
+        <div class="main">
+          <div class="module" v-for="(item,idnex) in walletList" :key="idnex" @click="switchWallet(item)" :style="{background:item.walletType=='ETH'?'#4eb8f5':'#ffca00' }">
+            <div class="content">
+              <img :src="require(`@/assets/images/token_logo/${item.walletType}.png`)" alt="">
+              <div class="title"> {{item.walletName}} </div>
+              <span class="more" @click="$router.push({name:'walletdetail',query:{data:JSON.stringify(item)}})"><van-icon name="ellipsis" size="24" /></span>
+              
+            </div>
+            <p class="address">
+                <span v-clipboard:copy="item.address" v-clipboard:success.stop="onCopy" @click.stop>
+                  {{public_js.ellipsAddress(item.address,12)}}
+                  <van-icon class="icon" :name="require('@/assets/images/other/copy.png')" />
+                </span>
+            </p>
+            <div class="defult" v-if="item.isMain">main</div>
+          </div>
+        </div>
+      </van-tab>
+    </van-tabs>
+
+    <!-- 添加钱包 -->
+    <van-popup v-model="Popupbox" closeable class="add_wallet">
+      <div class="add_title">
+        <font size="4">添加钱包</font>
+      </div>
+      <div class="add_module" :class="{'disabled':item != 'ETH'&&item != 'BTC'}" v-for="(item,index) in tokenList.slice(1)" :key="index" @click="createWallet(item)">
+        <div class="module_type">
+          <img :src="require(`@/assets/images/token_logo/${item}.png`)" style="width:20px">
+          <span>{{item}}</span>
+        </div>
+        <p v-if="item != 'ETH'&&item != 'BTC'">开发中</p>
+      </div>
+    </van-popup>
+    <!-- 创建 -->
+    <van-popup
+      v-model="createWallet_show"
+      position="bottom"
+      closeable
+      class="createWallet-box"
+      :style="{ height: '28%' }">
+      
+        <van-button type="default" plain size="large" class="createWallet-btn" @click="create_wallet()">创建</van-button>
+        <van-button type="default" plain size="large" class="createWallet-btn" @click="$router.push({path:'/import_wallet'})">导入</van-button>
+    </van-popup>
+
+  </div>
+</template>
+
+<script>
+import pageheader from '@/components/pageheader'
+export default {
+  components:{pageheader},
+  data(){
+    return{
+      tokenList:['ALL','ETH','BTC','TRX'],
+      walletType:'ALL',
+      walletInfo:[],
+      walletList:[],
+      Popupbox:false,
+      createWallet_show:false,
+      chekType:'ETH',
+    }
+  },
+  activated(){
+    this.walletInfo = this.walletList = this.public_js.GetStorage('walletInfo');
+    this.createWallet_show = false
+    this.Popupbox = false
+  },
+  methods:{
+    changeWallet(name){
+      if(name === 'ALL'){
+        this.walletList = this.walletInfo
+        return
+      }
+      this.walletList = this.walletInfo.filter(n => n.walletType === name); 
+    },
+    createWallet(item){   
+      if(item != 'ETH' && item != 'BTC'){
+        return
+      }
+      this.chekType = item;
+      this.createWallet_show = true;
+    },
+    switchWallet(item){
+      if(this.$route.query.switch){
+        this.walletInfo.forEach(item => {
+          item.isMain = 0
+        })
+        this.walletInfo.find(n => n.address == item.address).isMain = 1
+        this.public_js.SetStorage('walletInfo',this.walletInfo)
+        this.$router.push('wallet')
+      }
+    },
+    create_wallet(){
+      this.Popupbox=false;
+      this.createWallet_show=false;
+      this.$router.push({path:'/create_wallet',query:{wallet:this.chekType}})
+    },
+    onCopy(e) {
+      this.$toast("复制成功");
+    },
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.manage-wallet{
+  /deep/.van-nav-bar .van-icon{
+    color: #222;
+    font-size: 22px;
+  }
+  .token-logo{
+    width: 26px;
+  }
+  .main{
+    padding: 10px 15px 0;
+    box-sizing: border-box;
+    height: calc(100vh - 90px);
+    overflow-y: auto;
+    .module{
+      width: 100%;
+      height: 90px;
+      background: rgb(78, 184, 245);
+      border-radius: 7px;
+      padding: 10px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+      color: #fff;
+      position: relative;
+      .content{
+        display: flex;
+        justify-content: space-between;
+        height: 50px;
+        img{
+          width: 30px;
+          height: 30px;
+        }
+        .more{
+          width: 30px;
+        }
+      }
+      .address{
+        font-size: 13px;
+        .icon{
+          width: 20px;
+          height: 20px;
+          margin-left: 3px;
+        }
+      }
+      .defult{
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+      }
+    }
+  }
+    .add_wallet{
+    width: 95%;
+    height: 60%;
+    background: rgb(250, 250, 250);
+    border-radius: 7px;
+    .add_title{
+      line-height: 50px;
+      padding:0 20px;
+      border-bottom: 1px solid #eee;
+      background: #fff;
+    }
+    .add_module{
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 1px solid #eee;
+      background: #fff;
+      .module_type{
+        display: flex;
+        align-items: center;
+      }
+      span{
+        font-size: 16px;
+        margin-left: 10px;        
+      }
+    }
+    .disabled{
+      opacity: 0.5;
+    }
+  }
+  //钱包创建
+  .createWallet-box{
+    text-align: center;
+    padding: 40px 0 0 ;
+    box-sizing: border-box;
+    .createWallet-btn{
+      width: 94%;
+      margin-top: 10px;
+      color: rgb(48, 158, 201)
+    }
+  }
+}
+</style>
