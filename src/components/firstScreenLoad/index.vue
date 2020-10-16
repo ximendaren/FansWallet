@@ -17,15 +17,16 @@ export default {
         if(window.plus){
             setTimeout(()=>{
                 plus.navigator.setFullscreen(true);  
-                    this.versionInfo()
-                    // this.funcList()
+                plus.navigator.setStatusBarStyle("dark");
+          
+                this.versionInfo()
             },500)
         }else{
             this.routeInit()
         }
     },
     beforeDestroy(){
-        window.plus && plus.navigator.setFullscreen(false);
+        // window.plus && plus.navigator.setFullscreen(false);
     },
     methods:{
         // 获取发币功能信息
@@ -48,26 +49,16 @@ export default {
          //检测新版本      
         versionInfo(){  
             if(window.plus){
-this.$router.push({path:'/wallet'});return
+// this.$router.push({path:'/wallet'});return
                 app_version({appType:0}).then(res => {    
                     if(res.code === 0){
-                       
+                    
                         plus.runtime.getProperty(plus.runtime.appid, (wgtinfo) => {
                         res.data.app_version = wgtinfo.version
                         plus.storage.setItem('version_data',  JSON.stringify(res.data)) 
-                            this.$router.push({path:'/wallet'})
-                            // let walletData;
-                            // if (window.plus) {
-                            //     walletData = plus.storage.getItem("walletInfo")
-                            // } else {
-                            //     walletData = localStorage.getItem('walletInfo')
-                            // }
-
-                            // if (!walletData) {
-                            //     this.$router.push({path:'/login'})
-                            // }else{
-                            //     this.$router.push({path:'/wallet'})
-                            // }
+                        this.routeInit()
+     
+                        // this.$router.push({path:'/wallet'})
             
                         });
                     }else{
@@ -89,35 +80,30 @@ this.$router.push({path:'/wallet'});return
             }
         },
         //手势，指纹登录
-        routeInit(){
+        routeInit(){  
             if (window.plus) {
-                let token = plus.storage.getItem("token")    
-                if(!token){
-                    this.$router.push({name:'login'})
-                }else{
+
                     let isFingerprint = plus.storage.getItem("fingerprint") ? plus.storage.getItem("fingerprint") : 0; //指纹登录
-                    let isGesture = plus.storage.getItem("gesture") ? plus.storage.getItem("gesture") : 0; //手势登录
+                    // let isGesture = plus.storage.getItem("gesture") ? plus.storage.getItem("gesture") : 0; //手势登录
                     console.log('isFingerprint', isFingerprint)
-                    console.log('isGesture', isGesture)
+                    // console.log('isGesture', isGesture)
                     //手势和指纹都未开启 直接跳过
                     //指纹开启并且已验证 直接跳过
                     //指纹关闭并且手势开启且已验证 直接跳过
-                    if (isFingerprint == 0 && isGesture == 0) {
+                    if (isFingerprint == 0) {
                         this.$router.push({path:'/wallet'})
                   
                     } else if (isFingerprint == 1) {
                         this.$router.push({path:'/finger_login'})    
-                    } else if (isGesture == 1) {
-                        this.$router.push({path:'/gesture_login?optionType=0&toPath=/wallet'})
-                    }
+                    } 
+                    // else if (isGesture == 1) {
+                    //     this.$router.push({path:'/gesture_login?optionType=0&toPath=/wallet'})
+                    // }
 
-                }
+                
 
             } else {
-                let token = $cookies.get('token')
-                if(!token){   alert('cookie')
-                    this.$router.push({name:'login'})
-                }else{  
+  
 
                     this.$router.push({path:'/wallet'})
                     // let isFingerprint = localStorage.getItem("fingerprint") ? localStorage.getItem("fingerprint") : 0; //指纹登录
@@ -135,7 +121,7 @@ this.$router.push({path:'/wallet'});return
                     // } else if (isGesture == 1) {
                     //     this.$router.push({path:'/gesture_login?optionType=0&toPath=/chaincloud'})
                     // }
-                }
+                
             }
         }
     }

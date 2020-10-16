@@ -62,7 +62,7 @@
                 <!-- 设置密码 -->
                 <div class="setPassword-box">
                     <p>设置钱包密码</p>
-                    <van-field v-model="password" placeholder="输入钱包密码(由大小写英文和数字组合)" type="password" :border="false" class="input" oninput="value=value.replace(/[\W]/g,'')" />
+                    <van-field v-model="password" placeholder="输入钱包密码" type="password" :border="false" class="input" oninput="value=value.replace(/[\W]/g,'')" />
                     <van-field v-model="ag_password" placeholder="再次输入密码" type="password" :border="false" class="input" oninput="value=value.replace(/[\W]/g,'')" />
                     <van-field v-model="remark" placeholder="备注" class="input" />
                 </div>
@@ -107,11 +107,12 @@ export default {
             ag_password:'',
             remark:'',
             walletName:'',
-            keyStorePassword:''
+            keyStorePassword:'',
+            walletToken:''
         }
     },
     created(){
-
+        this.walletToken = this.$route.query.walletToken || 'ETH'
     },
     mounted(){
         window.onresize= ()=>{
@@ -154,47 +155,116 @@ export default {
             //     this.$toast("钱包密码必须包含数字和字母");
             //     return;
             // }
-            let params = {
-                WalletName:this.walletName,
-                Password:this.password,
-                Remark:this.remark,
-                HeadPortrait:1,
-                WalletType:'ETH',
-                PrivateKey:this.privatekeyText,
-                Words:this.wordText,
-                KeyStore:this.keystoreText,
-                KeyStorePassword:this.keyStorePassword,
-                ImportType:item.value,                
+            // let params = {
+            //     WalletName:this.walletName,
+            //     Password:this.password,
+            //     Remark:this.remark,
+            //     HeadPortrait:1,
+            //     WalletType:'ETH',
+            //     PrivateKey:this.privatekeyText,
+            //     Words:this.wordText,
+            //     KeyStore:this.keystoreText,
+            //     KeyStorePassword:this.keyStorePassword,
+            //     ImportType:item.value,                
+            // }
+
+
+
+            var ethers = require('ethers');
+            var wallet= ethers.Wallet.fromMnemonic(this.wordText);
+
+            console.log(wallet)
+            'shine dog venue hand question scan hero tennis room victory chimney tower'
+
+            var password = CryptoJS.AES.encrypt(this.password, CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.Pkcs7
+            });
+            var mnemonicWords = CryptoJS.AES.encrypt(this.wordText, CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.Pkcs7
+            });
+
+            let walletInfo = this.public_js.GetStorage('walletInfo') || []
+            if(walletInfo.length> 0){
+                walletInfo.forEach(item => {
+                    item.isMain = 0
+                })
             }
 
-            
-            // this.$toast.loading({
-            //     duration: 0,       // 持续展示 toast
-            //     forbidClick: true, // 禁用背景点击
-            //     loadingType: 'spinner',
-            //     message: '导入中'
-            // });
-            // importWallet(params).then(res => {
-            //     this.$toast.clear();
-            //     if(res.code === 0){
-            //         this.$router.push({
-            //             name:'walletmanage',
-            //             params:{
-            //                 data:{
-            //                     address:res.data.address,
-            //                     walletId:res.data.walletId,
-            //                     walletName: this.walletName,
-            //                     walletType:'ETH'
-            //                 }
-            //             }
-            //         })
+            let assetsToken;
+            if(this.walletToken === 'ETH'){ 
 
-            //     }else{
-            //         this.$toast(res.messages)
-            //     }
-            // }).catch(err => {
-            //     this.$toast('网络异常')
-            // })
+                assetsToken = [{
+                    contractAddress:wallet.address,
+                    tokenLogo:'',
+                    walletType:'ETH',
+                    tokenSymbol:this.walletName,
+                    totalAccount:0,
+                    totalUsd:0,
+                }]
+               
+                walletInfo.push({
+                    userName:'',
+                    walletName:this.walletName,
+                    password:password.ciphertext.toString(),
+                    remark:this.remark,
+                    isMain:1,
+                    address:wallet.address,
+                    walletType:'ETH',
+                    totalAccount:0,
+                    totalUsd:0,
+                    mnemonic:mnemonicWords.ciphertext.toString(),
+                    privateKey:wallet.privateKey,
+                    assetsToken:assetsToken
+                })
+            }
+            if(this.walletToken === 'BTC'){ 
+                var btcWallet = {};
+                var bitcoinjs = require('bitcoinjs-lib');
+                bip39.mnemonicToSeed(mnemonic).then(res=>{
+                var root = bitcoinjs.bip32.fromSeed(res);
+                var keyPair = root.derivePath("m/44'/0'/0'/0/0");
+                btcWallet.privateKey = keyPair.toWIF();    // 私钥：L2tduuvVupopVxJ8tFtmGf5KXxKoaJBRFUKU1VCoTX3dtskwwAhF
+                btcWallet.publicKey = keyPair.publicKey;
+                btcWallet.address = bitcoinjs.payments.p2pkh({ pubkey: btcWallet.publicKey }).address; 
+
+                // btcWallet.privateKey = CryptoJS.AES.encrypt(btcWallet.privateKey, CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
+                //     mode: CryptoJS.mode.ECB,
+                //     padding: CryptoJS.pad.Pkcs7
+                // });
+
+                    assetsToken = [{
+                        contractAddress:btcWallet.address,
+                        tokenLogo:'',
+                        walletType:'BTC',
+                        tokenSymbol:this.walletName,
+                        totalAccount:0,
+                        totalUsd:0,
+                    }]
+                    walletInfo.push({
+                        userName:'',
+                        walletName:this.walletName,
+                        password:password.ciphertext.toString(),
+                        remark:this.remark,
+                        isMain:0,
+                        address:btcWallet.address,
+                        walletType:'BTC',
+                        totalAccount:0,
+                        totalUsd:0,
+                        mnemonic:mnemonicWords.ciphertext.toString(),
+                        privateKey:btcWallet.privateKey,
+                        assetsToken:assetsToken
+                    })
+
+                });
+            }
+
+            setTimeout(() => {
+                this.public_js.SetStorage('walletInfo',walletInfo)
+                this.$router.push('wallet')
+                this.$toast.clear();
+            },30)
 
         },
         isScan(state){

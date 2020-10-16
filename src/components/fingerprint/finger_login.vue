@@ -33,7 +33,7 @@ export default {
         testState(state){
            this.fingerprint_show = false
             if(state==1){  //验证成功
-                this.$router.push({name:'chaincloud'})
+                this.$router.push({name:'wallet'})
             }
         },
         verify_finger(){

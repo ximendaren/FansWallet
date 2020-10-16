@@ -33,7 +33,6 @@ export default {
       option: [
         { text: "ETH", value: "ETH" },
         { text: "BTC", value: "BTC" },
-        { text: "EOS", value: "EOS" },
         { text: "TRX", value: "TRX" },
       ],
       tabs: [
@@ -67,10 +66,16 @@ export default {
         this.$toast("钱包地址不能为空");        
         return;
       }
-      if (this.address.slice(0,2) != '0x') {
-        this.$toast("钱包地址不合法");
-        return;
+      var WAValidator = require('wallet-address-validator');
+      if( !WAValidator.validate(this.address, this.value)){
+        this.$toast("钱包地址不合法");  
+        return
       }
+
+      // if (this.address.slice(0,2) != '0x') {
+      //   this.$toast("钱包地址不合法");
+      //   return;
+      // }
       if (!this.name) {
         this.$toast("名称不能为空");
         return;

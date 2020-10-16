@@ -142,16 +142,15 @@ export default {
   text-align: center;
 }
 .refresh-load {
-  height: calc(100vh-50px);
+  height: calc(100vh-46px);
   overflow-y: scroll;
 }
 .van-nav-bar {
-  height: 50px;
-  background: #f4f4f4;
+  height: 46px;
 }
 .van-nav-bar__arrow {
   font-size: 18px;
-  line-height: 50px;
+  line-height: 46px;
 }
 .van-icon {
   color: #333;font-size: 22px;

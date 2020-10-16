@@ -1,6 +1,5 @@
 <template>
     <div class="main">
-        <Header v-if="this.$route.path==='/chaincloud'" />
         <div class="container" :class="{active:this.$route.path==='/mycenter'}" >
 
         <keep-alive>

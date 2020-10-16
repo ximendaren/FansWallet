@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="bg-box"></div>
-    <div class="pageheader" :class="{'changeHeader':changeHeader}">
+    <div class="pageheader" :class="{'changeHeader':changeHeader  }" :style="{'padding-top':$store.state.appTop }">
         <span slot="left" class="icon" @click="back">
           <van-icon name="arrow-left" class="vanicon"/>
         </span>
@@ -20,6 +20,7 @@
 export default {
   props:['goBack','changeHeader'],
   created(){
+
   },
   methods:{
     back(){

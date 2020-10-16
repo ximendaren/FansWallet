@@ -12,7 +12,7 @@
       <van-cell title="设置支付密码" is-link center @click="changepaypsd" />
     </div>
     <div class="setback">
-      <van-cell title="指纹解锁"  center>
+      <van-cell title="指纹解锁"  center> 
         <van-switch v-model="fingerprint" size="22px" @change="fingerprint_change()" />  
       </van-cell>
       <van-cell title="手势解锁"  center>

@@ -1,14 +1,18 @@
 <template>
     <div class="container-outerChain">
         <div class="header van-hairline--bottom">
-            <van-icon name="arrow-left" class="back" @click="back" />&emsp;咨询
+            <Pageheader />
         </div>
         <iframe src="http://plt.zoosnet.net/LR/Chatpre.aspx?id=PLT72450935&lng=cn" width="100%" frameborder="0" scrolling="auto" class="iframe" ></iframe>
 
     </div>
 </template>
 <script>
+import Pageheader from "@/components/pageheader";
 export default {
+    components: {
+        Pageheader,
+    },
     data() {
         return {
             fromUrl:''

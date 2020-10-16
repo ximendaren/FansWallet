@@ -48,7 +48,7 @@
       :style="{ height: '28%' }">
       
         <van-button type="default" plain size="large" class="createWallet-btn" @click="create_wallet()">创建</van-button>
-        <van-button type="default" plain size="large" class="createWallet-btn" @click="$router.push({path:'/import_wallet'})">导入</van-button>
+        <van-button type="default" plain size="large" class="createWallet-btn" @click="$router.push({path:'/import_wallet',query:{walletToken:chekType}})">导入</van-button>
     </van-popup>
 
   </div>

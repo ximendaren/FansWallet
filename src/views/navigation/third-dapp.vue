@@ -7,10 +7,25 @@
                 <van-icon class="icon" name="close" @click="$router.back()" />
             </div>
         </div>
-        <iframe :src="linkData.link" width="100%" frameborder="0" scrolling="auto" class="iframe" ></iframe>
+        <iframe :src="linkData.dappUrl.includes('http')?linkData.dappUrl:''" width="100%" frameborder="0" scrolling="auto" class="iframe" ></iframe>
 
-        <van-share-sheet v-model="operation_show" :options="options" @select="operationType" />
-
+        <van-action-sheet v-model="operation_show" cancel-text="取消" close-on-click-action>
+            <div class="tool-content">
+                <div class="module" v-clipboard:copy="linkData.dappUrl" v-clipboard:success.stop="copyUrl">
+                    <img src="@/assets/images/icon/link.png" alt="">
+                    <p>复制链接</p>
+                </div>
+                <div class="module" @click="$router.go(0)">
+                    <img src="@/assets/images/icon/refresh.png">
+                    <p>刷新</p>
+                </div>
+                <div class="module" @click="collectionDapp()">
+                    <img v-if="isCollet" src="@/assets/images/icon/collet-a.png">
+                    <img v-else src="@/assets/images/icon/collet.png">
+                    <p>{{isCollet?'取消收藏':'收藏'}}</p>
+                </div>
+            </div>
+        </van-action-sheet>
 
     </div>
 </template>
@@ -21,20 +36,7 @@ export default {
         return{
             operation_show: false,
             linkData:{},
-            options: [
-                {
-                name: '复制链接',
-                icon: require('@/assets/images/icon/link.png'),
-                },
-                {
-                name: '刷新',
-                icon: require('@/assets/images/icon/refresh.png'),
-                },
-                {
-                name: '收藏',
-                icon: require('@/assets/images/icon/collet.png'),
-                },
-            ],
+            bookmark:[],
         }
     },
     // created(){
@@ -45,30 +47,32 @@ export default {
     //     plus.webview.close( 'window' );
     // },
     created(){
-        this.linkData = this.$route.query.data
+        this.linkData = JSON.parse(this.$route.query.data)
+        this.bookmark = this.public_js.GetStorage('bookmark') || []
+        console.log(this.linkData)
+    },
+    computed:{
+        isCollet(){
+            return this.bookmark.some(n => n.dappId === this.linkData.dappId)
+        }
     },
     methods:{
-        operationType(item,index){
-            this.operation_show = false;
-            switch (index) {
-                case 0:
-                    this.$toast('复制成功')
-                    break;
-                case 1:
-                    this.$router.go(0)
-                    break;
-                case 2:
-                    let bookmark = this.public_js.GetStorage('bookmark') || []
-                    bookmark.push(this.linkData)
-                    this.public_js.SetStorage('bookmark',bookmark)
-                    this.$toast('已收藏')
-                    break;
-            
-                default:
-                    break;
-            }
+        copyUrl(e){
+            this.$toast('复制成功');
+            this.operation_show = false
         },
-
+        collectionDapp(){
+            if(this.isCollet){
+                let index = this.bookmark.findIndex(n => n.dappId === this.linkData.dappId);
+                this.bookmark.splice(index,1)
+                this.$toast('已取消收藏')
+            }else{
+                this.$toast('已收藏')
+                this.bookmark.push(this.linkData)
+            }
+            this.public_js.SetStorage('bookmark',this.bookmark)
+            this.operation_show = false
+        }
     }
 }
 </script>
@@ -129,6 +133,23 @@ export default {
             width: 350px;
             transform: translate(-50%);
             border-radius: 8px;
+        }
+    }
+    .tool-content {
+        padding: 25px 15px;
+        display: flex;
+        .module{
+            width: 60px;
+            height: 50px;
+            margin-right: 20px;
+            text-align: center;
+            img{
+                width: 30px;
+                height: 30px;
+            }
+            p{
+                font-size: 12px;
+            }
         }
     }
 }

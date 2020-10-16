@@ -7,7 +7,8 @@ const request = axios.create({
     //根据自己配置的反向代理去设置不同环境的baeUrl
 
     //测试接口
-    baseURL: 'http://api.chainfans.io',  
+    baseURL: 'https://api.fanswallet.chainfans.io',
+
     // 线上接口
     // baseURL: 'https://api.cloud.chainfans.io',
 

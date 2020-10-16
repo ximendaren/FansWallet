@@ -212,7 +212,6 @@ export default {
             // }  
             var bip39 = require('bip39');
             this.mnemonic=  bip39.generateMnemonic();
-
             this.randomTerm = []
             this.validationTerm=[]
             this.termsData = this.mnemonic.split(' ')

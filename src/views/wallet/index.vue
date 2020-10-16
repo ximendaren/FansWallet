@@ -14,7 +14,7 @@
                         <p class="wallet-name">{{walletInfo?walletInfo.walletName:''}}
                             <span v-if="isHideAmount" @click="isHideAmount=!isHideAmount"><van-icon name="eye-o" /></span>
                             <span v-else @click="isHideAmount=!isHideAmount"><van-icon name="closed-eye" /></span>
-                            
+                            <van-tag color="#c8c9cc" text-color="#666" class="tag" v-if="!$store.state.networkStatus">离线</van-tag>
                         </p>
                         <p class="address" @click="showQr">
                             <span>{{walletInfo.address? public_js.ellipsAddress(walletInfo.address) :''}}</span>&nbsp;
@@ -36,10 +36,8 @@
             </div>
             <p class="assets van-hairline--bottom">
                 <span><b>资产</b></span>
-                <van-icon name="add-o" class="add-ico" @click="$router.push({name:'add_assets'})" />
+                <van-icon name="add-o" class="add-ico" @click="$router.push({path:'/add_assets',query:{walletType:walletInfo.walletType,address:walletInfo.address}})" />
             </p>
-
-
 
             <div class="token-list" @scroll="scroll">
                 <div class="token-box" v-for="(item,index) in walletInfo?walletInfo.assetsToken:''" :key="index"  @click="select_assets(item,index)">
@@ -48,9 +46,10 @@
                             <template slot="title" center> 
                                 <div class="left-logo"> 
                                     <div class="left-img">
-                                        <img :src='require("@/assets/images/token_logo/"+item.walletType+ ".png")'>
+                                        <img v-if="item.tokenLogo" :src='item.tokenLogo'>
+                                        <img v-else :src='require("@/assets/images/token_logo/"+item.walletType+ ".png")'>
                                     </div>
-                                    <span><b>{{item.walletType}}</b></span>
+                                    <span><b>{{item.tokenSymbol}}</b></span>
                                 </div>
                             </template>
                             <template slot="default">
@@ -58,7 +57,7 @@
                             </template>
                         </van-cell>
 
-                        <template slot="right">
+                        <template slot="right" v-if="index !== 0">
                             <van-button class="del-token" square type="danger" text="删除"  @click="delToken(item,index)" />
                         </template>
                     </van-swipe-cell>
@@ -120,6 +119,13 @@ export default {
         })
     },
     created(){
+        if(window.plus && plus.networkinfo.getCurrentType() == 1){
+            this.$store.state.networkStatus = false
+        }
+        if(window.plus){
+            this.$store.state.appTop = (plus.navigator.getStatusbarHeight()*plus.screen.scale)/2 + 'px'
+            plus.navigator.setFullscreen(false);
+        }
         // this.isUpdate()
         
         // if(this.$route.query.data){    //选择完默认钱包
@@ -137,11 +143,7 @@ export default {
         this.walletInfo = this.public_js.GetStorage('walletInfo');
         this.walletInfo = this.walletInfo.find(n=> n.isMain ==1)
         console.log(this.walletInfo)
-        // if(this.$route.query.data){
-        //     this.walletInfo = JSON.parse(this.$route.query.data)
-        // }else{
 
-        // }
     },
     methods:{
         scroll(event){
@@ -158,21 +160,11 @@ export default {
             // this.$router.push({path:'/wallet_transfer'})
         },
         delToken(item,index){   //删除当前资产
-            let params = {
-                tokenId:item.tokenId,
-                IsAdd:0
-            }
-            set_walletTokens(params).then(res => {
-                if(res.code === 0){
-                    this.walletInfo.walletCurrencyModels.splice(index,1)
-                    this.$toast('移除成功')
-                }else{
-                    this.$toast(res.messages)
-                }
-            }).catch(err => {
-                this.$toast.clear()
-                this.$toast('网络异常')
-            })
+            let walletData = this.public_js.GetStorage('walletInfo');
+            let i = walletData.findIndex(n => n.isMain === 1)
+            walletData[i].assetsToken.splice(index,1)
+            this.public_js.SetStorage('walletInfo',walletData);
+            this.walletInfo = walletData.find(n=> n.isMain ==1)
         },
         onRefresh() {      
             this.$toast('刷新成功');
@@ -352,6 +344,7 @@ export default {
             .info-left{
                 .wallet-name{
                     display: flex;
+                    align-items: center;
                     font-size: 24px;
                     width: 180px;
                     overflow:hidden; 
@@ -361,6 +354,9 @@ export default {
                         display: flex;
                         align-items: center;
                         margin-left: 5px;
+                    }
+                    .tag{
+                        height: 20px;
                     }
                 }
                 .address{
@@ -457,7 +453,7 @@ export default {
                 }
             }
             .del-token{
-                height: 52px;
+                height: 100%;
             }    
         
 

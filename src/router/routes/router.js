@@ -26,6 +26,7 @@ const routes = [
       {
         path: 'navigation',
         name: 'navigation', 
+        meta:{keepAlive: true},
         component: () => import('@/views/navigation/index'),       
       },
       {
@@ -412,7 +413,7 @@ const routes = [
   {  //导入钱包
     path: '/import_wallet',
     name: 'import_wallet',
-    meta: {headline:'导入钱包',title:'scan'},
+    meta: {headline:'导入钱包'},
     component: () => import('@/views/mycenter/wallet_management/import_wallet'),
   },
   {

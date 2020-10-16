@@ -43,10 +43,11 @@
             </div>
         </div>
 
-        <!-- <div class="t-footer">
-            <van-button type="info" class="footer-btn" style="background:#07c160" @click="screenShot">分享</van-button>
+        <div class="t-footer">
+            <!-- <van-button type="info" class="footer-btn" style="background:#07c160" @click="screenShot">分享</van-button> -->
+            <van-button type="info" class="footer-btn" style="background:#07c160" v-clipboard:copy="walletInfo.address" v-clipboard:success.stop="onCopy">复制</van-button>
             <van-button type="info" class="footer-btn" @click="setPrice_show=true">设置金额</van-button>
-        </div> -->
+        </div>
 
         <!-- 分享图 -->
         <van-dialog

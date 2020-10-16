@@ -11,46 +11,61 @@
     <van-cell title="反馈&意见" is-link center @click="feedbackClick" />
     <van-cell title="清理缓存" is-link center :value="Cache" @click="clearCache" />
     <van-cell title="关于我们" is-link center @click="lookaboutus" />
+    <van-cell title="指纹解锁"  center>
+      <van-switch v-model="fingerprint" size="22px" @change="fingerprint_change()" />  
+    </van-cell>
 
-
-    <div class="sethelp">
-    </div>
+    <fingerprint v-if="fingerprint_show" @testState="testState"></fingerprint>
 
   </div>
 </template>
 <script>
 import pageheader from '@/components/pageheader'
+import fingerprint from "@/components/fingerprint";
 export default {
-  components:{pageheader},
+  components:{pageheader, fingerprint},
   data() {
     return {
       val: "",
       Cache: "",
-      isCoinMakingHelp:true
+      isCoinMakingHelp:true,
+      fingerprint_show:false,
+      fingerprint:false,
     };
   },
   created() {
-      this.isCoinMakingHelp=this.$store.state.isGuide==1?true:false
-      if(window.plus){
-        this.val = plus.storage.getItem("version");
-      }else{
-        this.val = localStorage.getItem("version");
-      } 
+    this.fingerprint = this.public_js.GetStorage('fingerprint')?true:false;
+
   },
   methods: {
-    //引导是否开启
-    coinMakingHelp(){  
-      if(this.isCoinMakingHelp){
-        this.$toast('发币引导已开启')
-      }else{
-        this.$toast('发币引导已关闭')
-      }     
+    fingerprint_change(){
       if(window.plus){
-        plus.storage.setItem("isGuide",this.isCoinMakingHelp?1:0);
+        // 检查是否支持指纹识别
+        if(plus.fingerprint) {
+          if(!plus.fingerprint.isSupport()) {
+              this.$toast('此设备不支持指纹识别');
+              return;
+          }
+          if(!plus.fingerprint.isEnrolledFingerprints()) {
+              this.$toast('此设备未录入指纹，请到设置中开启');
+              return;
+          }
+          this.fingerprint_show=true
+        }
       }else{
-        localStorage.setItem("isGuide",this.isCoinMakingHelp?1:0);
-      } 
-      this.$store.commit('isGuide',this.isCoinMakingHelp?1:0)
+        this.$toast('此设备不支持指纹识别');
+      }
+    },
+    //验证结果
+    testState(state){
+      this.fingerprint_show = false
+      if(state==1){  //验证成功
+        plus.storage.setItem("fingerprint",JSON.stringify(this.fingerprint?1:0))
+        // plus.storage.setItem("fingerprint_checked",JSON.stringify(1))
+        this.$toast(this.fingerprint?'开启成功':'关闭成功')
+      }else{
+        this.fingerprint = !this.fingerprint
+      }
     },
     changelange(){
       this.$router.push({name:'setlanguage'})

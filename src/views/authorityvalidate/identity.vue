@@ -46,6 +46,14 @@ export default {
     },
     methods:{
         createdWallet(){
+            if(!this.identityData.words){
+                this.$toast('助记词不能为空')
+                return
+            }
+            if(this.identityData.words.trim().split(' ').length != 12 && this.identityData.words.trim().split(' ').length != 24){
+                this.$toast('助记词格式不正确')
+                return
+            }
             if(this.identityData.password.length < 6){
                 this.$toast('密码不小于6位')
                 return
@@ -54,9 +62,7 @@ export default {
                 this.$toast('两次密码输入不一致')
                 return
             }
-            // this.public_js.SetStorage('walletInfo',this.identityData)
-
-    
+            
 
             this.$router.push({name:'addToken',params:{ data:this.identityData }})
         },

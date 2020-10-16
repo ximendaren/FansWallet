@@ -14,6 +14,7 @@
             v-model="loading"
             :finished="finished"
             finished-text="没有更多了"
+            :immediate-check="false "
             @load="quotationList(quotation_data.length)"
           >  
             <div class="quotation">
@@ -140,7 +141,9 @@ export default {
     };
   },
   created(){
-
+    // if(this.quotation_data.length == 0){
+    //   this.quotationRefresh()
+    // }
   },
 
   methods:{

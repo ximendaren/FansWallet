@@ -67,17 +67,14 @@ export default {
             //eth
             var ethers = require('ethers');
             var bip39 = require('bip39');
-            // var privateKey = ethers.utils.randomBytes(16);
-            // const  mnemonic  =  bip39.entropyToMnemonic(privateKey)
-            var mnemonic=  bip39.generateMnemonic();
+            if(this.newWallet.words){
+                var mnemonic = this.newWallet.words
+            }else{
+                var mnemonic = bip39.generateMnemonic();
+            }
             var wallet= ethers.Wallet.fromMnemonic(mnemonic);
-            //btc
-            // var bip39 = require('bip39');
-            // console.log(bip39);
             
             console.log(mnemonic);
-            // var chekc= bip39.validateMnemonic(mnemonic);
-            // console.log(chekc);
 
             var password = CryptoJS.AES.encrypt(this.newWallet.password, CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
                 mode: CryptoJS.mode.ECB,
@@ -107,8 +104,10 @@ export default {
             if(this.tokenResult.includes('ETH')){ 
 
                 assetsToken = [{
-                    address:wallet.address,
+                    contractAddress:wallet.address,
+                    tokenLogo:'',
                     walletType:'ETH',
+                    tokenSymbol:'ETH',
                     totalAccount:0,
                     totalUsd:0,
                 }]
@@ -144,8 +143,10 @@ export default {
                 // });
 
                     assetsToken = [{
-                        address:btcWallet.address,
+                        contractAddress:btcWallet.address,
+                        tokenLogo:'',
                         walletType:'BTC',
+                        tokenSymbol:'BTC',
                         totalAccount:0,
                         totalUsd:0,
                     }]

@@ -166,8 +166,7 @@ export default {
     },
 
     created(){
-        this.walletInfo = JSON.parse(this.$route.query.walletInfo)
-        console.log(this.walletInfo)
+
         // if(window.plus){
         //     this.walletInfo =  JSON.parse(plus.storage.getItem('tokenList'))
         // }else{
@@ -180,29 +179,23 @@ export default {
         //     this.ethMinerInfo() //获取EHT矿工数据
         //     return
         // }
-        // if(this.$route.query.qrAddress){   //扫码信息         
-        //         if( this.$route.query.qrAddress.substr(0,1) === '{'){
-        //         let qrData = JSON.parse(this.$route.query.qrAddress)
-        //         this.transfer.address = qrData.address
-        //         this.transfer.price = qrData.price
-        //         let index = this.walletInfo.walletCurrencyModels.findIndex(n=> n.tokenSymbol == qrData.tokenSymbol)
-        //         this.transferToken = this.walletInfo.walletCurrencyModels[index==-1?0:index]
-        //     }else{
-        //         this.transfer.address = this.$route.query.qrAddress
-        //         this.transferToken = this.walletInfo.walletCurrencyModels[0]
-        //     }
-
-        //     this.go_Back = 'wallet'
-        // }else{
-        //     this.transferToken = this.walletInfo.walletCurrencyModels[0]
-        // }
+        if(this.$route.query.qrAddress){   //扫码信息          
+            if( this.$route.query.qrAddress.substr(0,1) === '{'){
+                let qrData = JSON.parse(this.$route.query.qrAddress)
+                this.transfer.address = qrData.address
+                this.transfer.price = qrData.price
+                
+            }else{
+                this.transfer.address = this.$route.query.qrAddress
+            }           
+            this.walletInfo = this.public_js.GetStorage('walletInfo').find(n => n.isMain)
+            this.go_Back = 'wallet'
+        }else{
+            this.walletInfo = JSON.parse(this.$route.query.walletInfo)
+            console.log(this.walletInfo)
+        }
        
         // this.ethMinerInfo() //获取EHT矿工数据
-        
-       
-
-        
-
     },
     mounted(){
         window.onresize= ()=>{
@@ -212,16 +205,11 @@ export default {
                 this.showBtn = true
             }
         }
-        // if(window.plus){
-        //     plus.key.addEventListener('backbutton',()=>{    
-        //         if(this.$route.query.qrAddress){ 
-
-        //             this.$router.push({name:'wallet'})
-        //         }else{
-        //             this.$router.back()
-        //         }
-        //     },true)
-        // }
+    },
+    beforeDestroy(){
+        if(this.go_Back){
+            this.$router.push('wallet')
+        }
     },
     watch:{
         senior_checked(state){

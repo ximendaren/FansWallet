@@ -319,7 +319,7 @@ export default {
   margin: 25px 0;
 }
 .sethelp {
-  margin: 25px 0;
+  margin: 15px 0;
   .describe{
     width: 160px;
     overflow: hidden;/*超出部分隐藏*/

@@ -7,6 +7,7 @@ export default new Vuex.Store({
   state: {
     isVersion:true,
     isLogin:false,
+    networkStatus:true,
     routerName:'chaincloud',
     shownav:true,
     del_walletId:'',
@@ -19,6 +20,7 @@ export default new Vuex.Store({
     isFingerprint:false,   // 是否开启指纹
     first_auto:0,
     isGuide:window.plus?!plus.storage.getItem("isGuide")?1:plus.storage.getItem("isGuide"):!localStorage.getItem("isGuide")?1:localStorage.getItem("isGuide"),
+    appTop:0,
     optionsData:[  
       {id:0,text:"基本功能",state:true,oldPrice:1,price:1,category:1,see:true},
       {id:1,text:"销毁",state:false,oldPrice:1,price:1,category:1,see:false},

@@ -8,14 +8,14 @@
             <div class="hot-title van-hairline--bottom"><span>热门资产</span> <span @click="$toast('开发中')">申请上币<van-icon class="ico" name="upgrade" /></span> </div>
             <div class="hot-module van-hairline--bottom" v-for="item in hotToken" :key="item.tokenId">
                 <div class="hot-img">
-                    <img :src="require('@/assets/images/token_logo/'+item.tokenType+'.png')" alt="">
+                    <img :src="item.tokenLogo" alt="">
                 </div>
                 <div class="hot-info">
                     <span><b>{{item.tokenSymbol}}</b>&emsp;<font style="color:#888">{{item.tokenName}}</font> </span>
-                    <span> {{ellipsAddress(item.tokenAddress)}}  </span>
+                    <span> {{ellipsAddress(item.contractAddress)}}  </span>
                 </div>
                 <div class="hot-state">
-                    <van-icon :name="item.isAdd==0?'add-o':'passed'" :style="{'opacity':item.isAdd==1?'0.5':'1'}" @click="add_assets(item)" />
+                    <van-icon :name="item.isAdd?'passed':'add-o'" :style="{'opacity':item.isAdd?'0.5':'1'}" @click="add_assets(item)" />
                 </div>
             </div>
         </div>
@@ -23,14 +23,14 @@
         <div class="hot-assets" v-if="checkToken.length>0&&isSearch">
             <div class="hot-module van-hairline--bottom" v-for="item in checkToken" :key="item.tokenId">
                 <div class="hot-img">
-                    <img :src="require('@/assets/images/token_logo/'+item.tokenType+'.png')" alt="">
+                    <img :src="item.tokenLogo" alt="">
                 </div>
                 <div class="hot-info">
                     <span><b>{{item.tokenSymbol}}</b>&emsp;<font style="color:#888">{{item.tokenName}}</font></span>
-                    <span>{{ellipsAddress(item.tokenAddress)}}</span>
+                    <span>{{ellipsAddress(item.contractAddress)}}</span>
                 </div>
-                <div class="hot-state" @click="add_assets(item)">
-                    <van-icon :name="item.isAdd==0?'add-o':'passed'" :style="{'opacity':item.isAdd==1?'0.5':'1'}" /> 
+                <div class="hot-state">
+                    <van-icon :name="item.isAdd?'passed':'add-o'" :style="{'opacity':item.isAdd?'0.5':'1'}" @click="add_assets(item)" />
                 </div>
             </div>
         </div>
@@ -45,6 +45,7 @@
 <script>
 import pageheader from '@/components/pageheader'
 import {get_hotList, get_searchToken, set_walletTokens, get_walletData} from '@/api/mycenter/wallet'
+import { stringify } from 'querystring'
 export default {
     components:{pageheader},
     data(){
@@ -56,80 +57,102 @@ export default {
         }
     },
     created(){
-        this.hot_list()
+        this.hot_list(this.$route.query.walletType)
     },
     methods:{
-        add_assets(item){
+        // isAdd(tokenId){
+        //     let walletInfo = this.public_js.GetStorage('walletInfo')
+        //     let index = walletInfo.findIndex(n => n.address === this.$route.query.address)
+        //     return walletInfo[index].assetsToken.slice(1).some(n => n.tokenId === tokenId)
+        // },
+        add_assets(item,isAdd){
             if(!item.isAdd){
-                let params = {
-                    tokenId:item.tokenId,
-                    IsAdd:1
-                }
-                // set_walletTokens(params).then(res => {
-                //     if(res.code === 0){
-                //         item.isAdd = 1;
-                //         this.$toast('添加资产成功')
-
-                //         get_walletData().then(res => {   
-                //             if(res.code === 0){
-                //                 if(window.plus){
-                //                     plus.storage.setItem('tokenList',JSON.stringify(res.data))
-                //                 }else{
-                //                     localStorage.setItem('tokenList',JSON.stringify(res.data))
-                //                 }
-                //             }
-                //         })    
-                //     }else{
-                //         this.$toast(res.messages)
-                //     }
-                // }).catch(err => {
-                //     this.$toast.clear()
-                //     this.$toast('网络异常')
-                // })
+                item.isAdd = 1
+                this.hotToken = JSON.parse(JSON.stringify(this.hotToken))
+                this.checkToken = JSON.parse(JSON.stringify(this.checkToken))
+                let walletInfo = this.public_js.GetStorage('walletInfo')
+                let index = walletInfo.findIndex(n => n.address === this.$route.query.address)
+                walletInfo[index].assetsToken.push({
+                    tokenSymbol:item.tokenSymbol,
+                    tokenName:item.tokenName,
+                    address:item.contractAddress,
+                    totalAccount:0,
+                    totalUsd:0,
+                    walletType:item.tokenType,
+                    tokenLogo:item.tokenLogo,
+                    contractProtocol:item.contractProtocol,
+                    tokenId:item.tokenId
+                })
+                this.public_js.SetStorage('walletInfo',walletInfo)
+                
+                
+                console.log(this.hotToken)
+                this.$toast('添加资产成功')
             }
         },
-        hot_list(){
-            // this.$toast.loading({
-            // message: '加载中...',
-            // forbidClick: true,
-            // loadingType: 'spinner'
-            // });
-            // get_hotList().then(res => {
-            //     this.$toast.clear()
-            //     if(res.code === 0){
-            //         this.hotToken = res.data
-            //     }else{
-            //         this.$toast(res.messages)
-            //     }
-            // }).catch(err => {
-            //     this.$toast.clear()
-            //     this.$toast('网络异常')
-            // })
+        hot_list(type){
+            this.$toast.loading({
+            message: '加载中...',
+            forbidClick: true,
+            loadingType: 'spinner'
+            });
+            let params = {
+                ChainCode:'ETH'
+            }
+            get_hotList(params).then(res => {
+                this.$toast.clear()
+                if(res.code === 0){
+                    this.hotToken = res.data
+                    let walletInfo = this.public_js.GetStorage('walletInfo').find(n => n.address === this.$route.query.address)
+
+                    this.hotToken.forEach(item => {
+                        walletInfo.assetsToken.forEach(item2 => {
+                            if(item.tokenId === item2.tokenId){
+                                item.isAdd = 1
+                            }
+                        })
+                    })
+                   
+                }else{
+                    this.$toast(res.messages)
+                }
+            }).catch(err => {
+                this.$toast.clear()
+                this.$toast('网络异常')
+            })
         },
         searchToken(){    
-            // let params = {
-            //     PageCount:15,
-            //     GetType:'After',
-            //     PagingParams:0,
-            //     TokenSymbol:this.tokenValue
-            // }
-            // this.$toast.loading({
-            //     message: '加载中...',
-            //     forbidClick: true,
-            //     loadingType: 'spinner'
-            // });
-            // get_searchToken(params).then(res => {
-            //     this.$toast.clear()
-            //     if(res.code === 0){
-            //         this.checkToken = res.data
-            //         console.log(this.checkToken)
-            //     }else{
-            //         this.$toast(res.messages)
-            //     }
-            // }).catch(err => {
-            //     this.$toast('网络异常')
-            //     this.$toast.clear()
-            // })
+            let params = {
+                PageCount:15,
+                GetType:'After',
+                PagingParams:0,
+                TokenSymbol:this.tokenValue,
+                ChainCode:'ETH'
+            }
+            this.$toast.loading({
+                message: '加载中...',
+                forbidClick: true,
+                loadingType: 'spinner'
+            });
+            get_searchToken(params).then(res => {
+                this.$toast.clear()
+                if(res.code === 0){
+                    this.checkToken = res.data
+                    let walletInfo = this.public_js.GetStorage('walletInfo').find(n => n.address === this.$route.query.address)
+                    this.checkToken.forEach(item => {
+                        walletInfo.assetsToken.forEach(item2 => {
+                            if(item.tokenId === item2.tokenId){
+                                item.isAdd = 1
+                            }
+                        })
+                    })
+                }else{
+                    this.$toast(res.messages)
+                }
+            }).catch(err => {
+                this.$toast('网络异常')
+                this.$toast.clear()
+            })
         },
         ellipsAddress(address){
             return address.slice(0,12)+'...'+address.slice(address.length-12,address.length)

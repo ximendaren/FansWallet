@@ -6,7 +6,7 @@ import qs from "querystring"
 
 // export const importWallet= (params) => post('/v1/wallet/import',qs.stringify(params)) //导入钱包
 
-// export const get_hotList= () => get('/v1/wallet/token/list-hot/')  //热门货币
+export const get_hotList= (params) => get('/v1/wallet/token/list-hot',params)  //热门货币
 
-// export const get_searchToken= (params) => get('/v1/wallet/token/list',params)  //搜索货币
+export const get_searchToken= (params) => get('/v1/wallet/token/list',params)  //搜索货币
 
