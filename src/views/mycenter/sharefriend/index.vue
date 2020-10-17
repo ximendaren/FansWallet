@@ -119,8 +119,8 @@ export default {
 
       　　let msg = {
       　　　　type: type=='weixin'?'web':'text',　　//分享的内容的类型 
-      　　　　title: '迷链云',
-      　　　　content: '迷链云APP注册',
+      　　　　title: '迷链钱包',
+      　　　　content: '迷链钱包APP注册',
       　　　　thumbs: ['http://api.ecs.chainfans.io/cfcdn/203/155-f8cd2dbfa9954c60ad02def0d79b9301.png'],
       　　　　href: that.copyUrl,
       　　　　extra:{scene:scene} // 'WXSceneSession'分享给好友，'WXSceneTimeline'分享到朋友圈

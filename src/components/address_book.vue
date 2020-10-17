@@ -1,6 +1,6 @@
 <template>
     <div class="container-address">
-        <div class="header van-hairline--bottom">
+        <div class="header van-hairline--bottom" :style="{'padding-top':$store.state.appTop}">
             <van-icon name="arrow-left" class="back" @click="select_address()" />&emsp;地址薄
         </div>
         <van-tabs>

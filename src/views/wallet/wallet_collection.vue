@@ -14,13 +14,13 @@
                 </div>
             </div>
             <div class="qr-content" ref="content">
-                <div class="qr-text"> {{ !isPrice&&walletInfo.walletCurrencyModels?'请扫二维码进行转账':'请使用迷链云钱包扫二维码进行'}} </div>
+                <div class="qr-text"> {{ !isPrice?'请扫二维码进行转账':'请使用迷链钱包扫描二维码'}} </div>
                 <div class="qr-border">
                     <img src="@/assets/images/wallet/qr-border.png">
                 </div>
                 <div id="qrcode" class="qrcode" ref="qrCodeUrl" :style="{'margin-top':qrcodeHeight}"></div>
                 <div class="qr-price" v-if="isPrice">
-                    {{collection_price}} {{walletInfo.walletCurrencyModels?walletInfo.walletCurrencyModels[activeToken].tokenSymbol:walletInfo.tokenSymbol }}
+                    扫二维码，转入 {{collection_price}} {{walletInfo.walletName||walletInfo.tokenSymbol }}
                     <span @click="clear_price()">&emsp;<van-icon name="close" /></span>
                 </div>
             </div>
@@ -34,7 +34,7 @@
                         <div class="logo-img">
                             <img src="@/assets/images/my_center/logo.png" alt="">
                         </div>
-                        <span>迷链云</span>
+                        <span>迷链钱包</span>
                     </div>
                     <div class="download-qr">
                         <div id="downQr" class="downQr" ref="downQr"></div> 
@@ -46,7 +46,7 @@
         <div class="t-footer">
             <!-- <van-button type="info" class="footer-btn" style="background:#07c160" @click="screenShot">分享</van-button> -->
             <van-button type="info" class="footer-btn" style="background:#07c160" v-clipboard:copy="walletInfo.address" v-clipboard:success.stop="onCopy">复制</van-button>
-            <van-button type="info" class="footer-btn" @click="setPrice_show=true">设置金额</van-button>
+            <van-button type="info" class="footer-btn" @click="setPrice_show=true;setCollectionPrice=''">设置金额</van-button>
         </div>
 
         <!-- 分享图 -->
@@ -114,7 +114,7 @@
             <div class="setPrice-box">
                 <div class="input-price">
                     <span> 金额</span>&emsp;
-                    <van-field class="input" v-model="collection_price" placeholder="请输入金额"  />   
+                    <van-field class="input" v-model="setCollectionPrice" placeholder="请输入金额" type="number" />
                 </div>
                 <div class="select-token" v-if="walletInfo.walletCurrencyModels">
                     <div class="token-box" v-for="(item,index) in walletInfo.walletCurrencyModels" :key="index" @click="collection_token(item,index)">
@@ -153,7 +153,8 @@ export default {
             setPrice_show:false,
             share_show:false,
             changeHeader:true,
-            collection_price:0,
+            collection_price:'',
+            setCollectionPrice:'',
             activeToken:0,
             walletInfo:{},
             qrcode:'',
@@ -170,16 +171,15 @@ export default {
     mounted(){
 
         this.qrcodeHeight = (this.$refs.content.offsetHeight - this.$refs.qrCodeUrl.offsetHeight) /2 +'px'
-        if(this.walletInfo.walletCurrencyModels){
-            this.creatQrCode(this.walletInfo.address) 
-        }else{
-            var collectionInfo = {
-                tokenSymbol:this.walletInfo.tokenSymbol,
-                price:this.collection_price,
-                address:this.walletInfo.address
-            }
-            this.creatQrCode(JSON.stringify(collectionInfo)) 
-        }
+        this.creatQrCode(this.walletInfo.address) 
+        // }else{
+        //     var collectionInfo = {
+        //         tokenSymbol:this.walletInfo.tokenSymbol,
+        //         price:this.collection_price,
+        //         address:this.walletInfo.address
+        //     }
+        //     this.creatQrCode(JSON.stringify(collectionInfo)) 
+        // }
         
     },
     watch:{
@@ -290,8 +290,8 @@ export default {
             　　let msg = {
             　　　　type: 'image',　　//分享的内容的类型 
                    pictures:["_doc/" + that.filename],
-            　　　　title: '迷链云',
-            　　　　content: '迷链云APP注册',
+            　　　　title: '迷链钱包',
+            　　　　content: '迷链钱包APP注册',
             // 　　　　thumbs: ['http://api.ecs.chainfans.io/cfcdn/203/155-f8cd2dbfa9954c60ad02def0d79b9301.png'],
             // 　　　　href: that.copyUrl,
             　　　　extra:{scene:scene} // 'WXSceneSession'分享给好友，'WXSceneTimeline'分享到朋友圈
@@ -314,7 +314,11 @@ export default {
         },
         // 设置金额
         setPrice_sure(){ 
-            this.isPrice=true
+            this.isPrice = true
+            if(this.setCollectionPrice){
+                this.collection_price = this.setCollectionPrice
+            }
+            
             // 清空二维码
             let qrcodeEL = document.getElementById("qrcode");
             let qrcode = new QRCode(qrcodeEL);  
@@ -344,7 +348,7 @@ export default {
             let qrcode = new QRCode(qrcodeEL);  
             document.getElementById("qrcode").innerHTML = "";
 
-            this.collection_price = 0;
+            this.collection_price = '';
             this.activeToken = 0;
             this.isPrice = false
             if(this.walletInfo.walletCurrencyModels){
@@ -374,7 +378,7 @@ export default {
             }
             done();
         },
-        collection_token(item,index){   console.log(item)
+        collection_token(item,index){  
             this.activeToken = index
         },
         creatQrCode(address) {   
@@ -485,9 +489,11 @@ export default {
                 height: 160px;
             }
             .qr-price{
-                margin-top: 25px;
+                margin-top: 30px;
                 color: rgb(255, 93, 93);
-                margin-left: 50px;
+                margin-left: 30px;
+                text-align: center;
+                font-size: 13px;
                 span{
                     color: #949494;
                     font-size: 14px;
