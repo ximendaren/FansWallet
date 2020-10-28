@@ -1,13 +1,13 @@
 <template>
     <div class="third-party">
-        <div class="header">
+        <div class="header" ref="header" :style="{'padding-top':$store.state.appTop }">
             <!-- <div class="title"> {{linkData.title}} </div> -->
             <div class="operation">
                 <van-icon class="icon" name="ellipsis" @click="operation_show=true"  />
                 <van-icon class="icon" name="close" @click="$router.back()" />
             </div>
         </div>
-        <iframe :src="linkData.dappUrl.includes('http')?linkData.dappUrl:''" width="100%" frameborder="0" scrolling="auto" class="iframe" ></iframe>
+        <!-- <iframe :src="linkData.dappUrl.includes('http')?linkData.dappUrl:''" width="100%" frameborder="0" scrolling="auto" class="iframe" ></iframe> -->
 
         <van-action-sheet v-model="operation_show" cancel-text="取消" close-on-click-action>
             <div class="tool-content">
@@ -39,18 +39,22 @@ export default {
             bookmark:[],
         }
     },
-    // created(){
-    //     plus.webview.open(this.$route.query.data,'window',{top:'46px',bottom:'0px'}); 
-   
-    // },
-    // beforeDestroy(){
-    //     plus.webview.close( 'window' );
-    // },
-    created(){
-        this.linkData = JSON.parse(this.$route.query.data)
+    mounted(){
+        plus.webview.open(JSON.parse(this.$route.query.data).dappUrl,'window',{top:this.$refs.header.clientHeight+'px',bottom:'0px',
+            progress:{
+				color:'#2364bc'
+            } 
+        }); 
         this.bookmark = this.public_js.GetStorage('bookmark') || []
-        console.log(this.linkData)
     },
+    beforeDestroy(){
+        plus.webview.close( 'window' );
+    },
+    // created(){
+    //     this.linkData = JSON.parse(this.$route.query.data)
+    //     this.bookmark = this.public_js.GetStorage('bookmark') || []
+    //     console.log(this.linkData)
+    // },
     computed:{
         isCollet(){
             return this.bookmark.some(n => n.dappId === this.linkData.dappId)
@@ -87,7 +91,7 @@ export default {
         display: flex;
         justify-content: flex-end;
         align-items: center;
-        position: relative;
+        // position: relative;
         .title{
             position: absolute;
             top: 0;
@@ -114,7 +118,7 @@ export default {
     .iframe{
         height: calc(100vh - 46px);
         position: absolute;
-        top: 46px;
+        // top: 46px;
     }
     .third-tips{
         padding: 60px 25px 0;

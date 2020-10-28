@@ -1,10 +1,6 @@
 <template>
   <div class="set">
-    <div class="header">
-      <van-icon name="arrow-left" size="20" @click="$router.back()" />&nbsp;
-      钱包管理
-    </div>
-
+    <Pageheader />
     <div class="userInfo-box">
       <div @click="headPortrait_show=false"  class="head-portrait">
         <img :src='"@/assets/images/wallet_logo/wallet-1.png"'>
@@ -19,7 +15,8 @@
       <van-cell size="large" icon="records" title="描述"  :value="walletInfo.remark" value-class="describe" center  @click="tipClick" />
       <van-cell size="large" icon="description" title="导出助记词" is-link center @click="exportwords('助记词')" />
       <van-cell size="large" icon="peer-pay" title="导出 Keystore" is-link center @click="exportwords('Keystore')" />
-      <van-cell size="large" icon="share" title="导出私钥" is-link center @click="exportwords('私钥')" />
+      <van-cell size="large" icon="share-o" title="导出私钥" is-link center @click="exportwords('私钥')" />
+      <!-- <van-cell size="large" icon="cash-on-deliver" title="免密支付" is-link center @click="$router.push('freePayment')" /> -->
       <!-- <van-cell size="large" icon="edit" title="修改钱包密码" is-link center @click="$router.push({path:'/walletPassword',query:{walletId:walletInfo.walletId}})   " /> -->
     </div>
     <div class="del-wallet" v-if="show_del" @click="exportwords('del')"><b>删除钱包</b></div>
@@ -68,7 +65,11 @@
 <script>
 import CryptoJS from "crypto-js";
 import {get_privateInfo, deleteWallet, set_WalletInfo} from '@/api/mycenter/wallet'
+import Pageheader from "@/components/pageheader";
 export default {
+  components: {
+      Pageheader,
+  },
   data() {
     return {
       walletInfo:{},
@@ -85,7 +86,7 @@ export default {
   },
   created() {
     this.walletInfo = JSON.parse(this.$route.query.data)    
-    this.walletLogo_active = this.walletInfo.headPortrait
+    // this.walletLogo_active = this.walletInfo.headPortrait
     if(this.walletInfo.isMain == 1){
       this.show_del = false
     }
@@ -165,24 +166,30 @@ export default {
       }
 
       if(this.exportType=='del'){
-        let params = {
-          WalletId:this.walletInfo.walletId,
-          Password:this.password,
-        }
-        deleteWallet(params).then(res => {
-          this.$toast.clear();
-          if(res.code === 0){
-            this.password = ''
-            this.$toast.success('钱包删除成功');
-            this.$router.go(-1)
-            this.$store.commit('delWalletId',this.walletInfo.walletId)
-          }else{
-            this.$toast(res.messages)
-          }
-        }).catch(err => {
-          this.$toast.clear();
-          this.$toast('网络异常')
-        })
+        let walletInfo = this.public_js.GetStorage('walletInfo')
+        let index = walletInfo.findIndex(i => i.address == this.walletInfo.address)
+        walletInfo.splice(index,1)
+        this.public_js.SetStorage('walletInfo',walletInfo)
+        this.$toast('删除成功')
+        this.$router.back()
+        // let params = {
+        //   WalletId:this.walletInfo.walletId,
+        //   Password:this.password,
+        // }
+        // deleteWallet(params).then(res => {
+        //   this.$toast.clear();
+        //   if(res.code === 0){
+        //     this.password = ''
+        //     this.$toast.success('钱包删除成功');
+        //     this.$router.go(-1)
+        //     this.$store.commit('delWalletId',this.walletInfo.walletId)
+        //   }else{
+        //     this.$toast(res.messages)
+        //   }
+        // }).catch(err => {
+        //   this.$toast.clear();
+        //   this.$toast('网络异常')
+        // })
      
       }else{
         let type;

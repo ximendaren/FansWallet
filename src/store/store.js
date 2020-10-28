@@ -19,6 +19,7 @@ export default new Vuex.Store({
     wallet_default:{},
     isFingerprint:false,   // 是否开启指纹
     first_auto:0,
+    minerData:'',
     isGuide:window.plus?!plus.storage.getItem("isGuide")?1:plus.storage.getItem("isGuide"):!localStorage.getItem("isGuide")?1:localStorage.getItem("isGuide"),
     appTop:0,
     optionsData:[  

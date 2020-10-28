@@ -33,6 +33,7 @@
 <script>
 import Pageheader from "@/components/pageheader";
 import CryptoJS from "crypto-js";
+import { created_wallet } from "@/api/wallet"
 export default {
     components: {
         Pageheader,
@@ -102,7 +103,7 @@ export default {
             let walletInfo = [];
             let assetsToken;
             if(this.tokenResult.includes('ETH')){ 
-
+                this.createdWallet('ETH',wallet.address)
                 assetsToken = [{
                     contractAddress:wallet.address,
                     tokenLogo:'',
@@ -128,6 +129,7 @@ export default {
                 })
             }
             if(this.tokenResult.includes('BTC')){ 
+                
                 var btcWallet = {};
                 var bitcoinjs = require('bitcoinjs-lib');
                 bip39.mnemonicToSeed(mnemonic).then(res=>{
@@ -142,6 +144,7 @@ export default {
                 //     padding: CryptoJS.pad.Pkcs7
                 // });
 
+                // this.createdWallet('BTC',btcWallet.address)
                     assetsToken = [{
                         contractAddress:btcWallet.address,
                         tokenLogo:'',
@@ -174,6 +177,19 @@ export default {
                 this.$toast.clear();
             },30)
 
+        },
+        createdWallet(ChainCode,Address){
+            let params = {
+                ChainCode:ChainCode,
+                Address:Address
+            }
+            created_wallet(params).then(res => {
+                if(res.code === 0){
+                    return
+                }else{
+                    this.$toast(res.messages)
+                }
+            })
         }
     },
 }

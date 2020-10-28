@@ -33,7 +33,7 @@ export default {
       option: [
         { text: "ETH", value: "ETH" },
         { text: "BTC", value: "BTC" },
-        { text: "TRX", value: "TRX" },
+        // { text: "TRX", value: "TRX" },
       ],
       tabs: [
         {

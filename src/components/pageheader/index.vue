@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="bg-box"></div>
+    <div class="bg-box" :style="{'padding-top':$store.state.appTop }"></div>
     <div class="pageheader" :class="{'changeHeader':changeHeader  }" :style="{'padding-top':$store.state.appTop }">
         <span slot="left" class="icon" @click="back">
           <van-icon name="arrow-left" class="vanicon"/>

@@ -1,8 +1,11 @@
 <template>
   <div class="myaddress">
-    <van-nav-bar title="地址薄" @click-left="leftClick" left-arrow>
-      <van-icon name="plus" class="icon" slot="right"  @click="rightClick" />
-    </van-nav-bar>
+    <div class="header" :style="{'padding-top':$store.state.appTop}">
+      <van-icon name="arrow-left" size="22" @click="leftClick" />
+      <span>地址薄</span>
+      <van-icon name="plus" class="icon" size="22" slot="right" @click="rightClick" />
+    </div>
+
     <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
       <div class="empty" v-if="list&&list.length==0">
         请添加钱包
@@ -135,6 +138,17 @@ export default {
   color: #222;
   font-size: 22px;
 }
+.header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 46px;
+  padding: 0 10px;
+  background: #fff;
+  span{
+    font-size: 16px;
+  }
+}
 .empty{
   line-height: 50px;
   font-size: 16px;
@@ -142,8 +156,8 @@ export default {
   text-align: center;
 }
 .refresh-load {
-  height: calc(100vh-46px);
-  overflow-y: scroll;
+  // height: calc(100vh-46px);
+  // overflow-y: scroll;
 }
 .van-nav-bar {
   height: 46px;

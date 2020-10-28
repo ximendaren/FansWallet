@@ -133,6 +133,7 @@
 <script>
 import CryptoJS from "crypto-js";
 import {get_mnemonicWord, createWallet} from '@/api/mycenter/wallet'
+import { created_wallet } from "@/api/wallet"
 export default {
     data(){
         return{
@@ -239,6 +240,7 @@ export default {
                 // var privateKey = ethers.utils.randomBytes(16);
                 // this.mnemonic  =  bip39.entropyToMnemonic(privateKey)
                 var wallet= ethers.Wallet.fromMnemonic(this.mnemonic);
+                this.createdWallet('ETH',wallet.address)
                 assetsToken = [{
                     address:wallet.address,
                     walletType:'ETH',
@@ -315,6 +317,19 @@ export default {
                 });
 
             }, 500);
+        },
+        createdWallet(ChainCode,Address){   
+            let params = {
+                ChainCode:ChainCode,
+                Address:Address
+            }
+            created_wallet(params).then(res => {
+                if(res.code === 0){
+                    return
+                }else{
+                    this.$toast(res.messages)
+                }
+            })
         },
         sure_back(){
             this.$router.back()

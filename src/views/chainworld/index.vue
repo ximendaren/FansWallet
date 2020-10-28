@@ -1,7 +1,7 @@
 <template>
   <div class="chainworld">
     <div class="navBg"></div>
-    <van-tabs v-model="world_active" class="reset" type="card" sticky :offset-top="10" color="#2364bc">
+    <van-tabs v-model="world_active" class="reset" type="card" sticky :offset-top="parseInt($store.state.appTop)+ 10 +'px'" color="#2364bc">
       <van-tab title="行情">
         <!-- <van-tabs v-model="quotation_active" @click="quotationActive()"  color="#2364bc"> -->
           <!-- <van-tab title="关注">
@@ -19,7 +19,7 @@
           >  
             <div class="quotation">
               <div class="q-box"></div>
-              <div class="q-title">
+              <div class="q-title" :style="{ top:parseInt($store.state.appTop)+40 +'px' }">
                 <span>币种</span>
                 <span>最新价</span>
                 <span>24H涨幅</span>
@@ -144,6 +144,7 @@ export default {
     // if(this.quotation_data.length == 0){
     //   this.quotationRefresh()
     // }
+
   },
 
   methods:{
@@ -267,15 +268,15 @@ export default {
   z-index: 0;
 }
 /deep/.van-sticky--fixed{
-  top: 10px !important;
+  // top: 10px !important;
 }
-.clearfix::after {
-  content: ".";
-  display: block;
-  height: 0;
-  clear: both;
-  visibility: hidden;
-}
+// .clearfix::after {
+//   content: ".";
+//   display: block;
+//   height: 0;
+//   clear: both;
+//   visibility: hidden;
+// }
 .chainworld {
   background: #fff;
   font-size: 14px;
@@ -288,23 +289,23 @@ export default {
     position: fixed;
     top: 0px;
     width: 100%;
-    height: 40px;
+    height: 70px;
     background: #fff;
     z-index: 2;
   }
   .reset{
-    padding-top: 8px !important;
+    // padding-top: 8px !important;
   }
 
   .quotation{
-    margin-top: 15px;
+    // margin-top: 15px;
     .q-box{
       height: 16px;
       background: #fff;
     }
     .q-title{
       position: fixed;
-      top:40px;
+      // top:40px;
       left: 0;
       right: 0;
       line-height: 30px;

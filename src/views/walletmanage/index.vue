@@ -1,8 +1,10 @@
 <template>
   <div class="manage-wallet">
-    <van-nav-bar :title="$route.query.switch?'选择钱包':'钱包管理'" @click-left="$router.back()" left-arrow>
-      <van-icon name="plus" class="icon"  size="20" slot="right" @click="Popupbox = true" />
-    </van-nav-bar>
+    <div class="header" :style="{'padding-top':$store.state.appTop}">
+      <van-icon name="arrow-left" size="22" @click="$router.back()" />
+      <span>{{ $route.query.switch?'选择钱包':'钱包管理' }}</span>
+      <van-icon name="plus" class="icon" size="22" slot="right" @click="Popupbox = true" />
+    </div>
     <van-tabs v-model="walletType" @change="changeWallet">
       <van-tab :name="token" v-for="token in tokenList" :key="token">
         <template #title> <img class="token-logo" :src="require(`@/assets/images/token_logo/${token}.png`)"> </template>
@@ -15,10 +17,10 @@
               
             </div>
             <p class="address">
-                <span v-clipboard:copy="item.address" v-clipboard:success.stop="onCopy" @click.stop>
-                  {{public_js.ellipsAddress(item.address,12)}}
-                  <van-icon class="icon" :name="require('@/assets/images/other/copy.png')" />
-                </span>
+              <span v-clipboard:copy="item.address" v-clipboard:success.stop="onCopy" @click.stop>
+                {{public_js.ellipsAddress(item.address,12)}}
+                <van-icon class="icon" :name="require('@/assets/images/other/copy.png')" />
+              </span>
             </p>
             <div class="defult" v-if="item.isMain">main</div>
           </div>
@@ -116,6 +118,16 @@ export default {
   /deep/.van-nav-bar .van-icon{
     color: #222;
     font-size: 22px;
+  }
+  .header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 46px;
+    padding: 0 10px;
+    span{
+      font-size: 16px;
+    }
   }
   .token-logo{
     width: 26px;

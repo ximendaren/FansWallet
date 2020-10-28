@@ -10,7 +10,7 @@
 
         <div class="amount">
             <p class="amount-top">
-                <span>{{walletInfo.walletType}}</span>
+                <span>{{walletInfo.walletType || walletInfo.tokenSymbol}}</span>
                 <span style="color:#2364bc" @click="transfer.price=transferToken.totalAccount">余额 {{parseFloat(walletInfo.totalAccount)}}</span>
             </p>
             <van-field v-model="transfer.price" size="large" placeholder="请输入金额" class="price-size" />
@@ -25,23 +25,22 @@
         </div>
         <div class="minersFee-box">
             <span>矿工费</span>
-            <span @click="is_seeFee=!is_seeFee"> {{ formatNum(etherValue) }} ether ≈ ￥{{turnCNY(etherValue).toFixed(2) }}
+            <span @click="$router.push('set_minerFee')"> {{ formatNum(etherValue) }} ether ≈ ￥{{turnCNY(etherValue).toFixed(2) }}
                 <van-icon :name="!is_seeFee?'arrow':'arrow-down'" />
             </span>
             
         </div>
         <van-button  v-if="showBtn" type="primary" :disabled="!transfer.price || !transfer.address" class="nextBtn" @click="transfer_next()">下一步</van-button>
         
-        <div class="set-fee " v-show="is_seeFee">
+        <!-- <div class="set-fee " v-show="is_seeFee">
             <div class="fee-box " :class="{'animate':senior_checked}">
                 <div class="change-fee ">
+                    <p class="gwei"> {{transfer.gasPrice.toFixed(2)}} gwei</p>
                     <div class="slider-box">
                         <span>慢</span>
                         <span><van-slider v-model="transfer.gasPrice" :min="1" :max="gasPriceMax" :step="0.01" class="slider" /></span>
                         <span>快</span>
                     </div>
-                    <p class="gwei"> {{transfer.gasPrice.toFixed(2)}} gwei</p>
-
                 </div>
                 <div class="change-fee2">
                     <van-field v-model="transfer.custom_gasPrice" type="number" placeholder="自定义Gas Price" @blur="gasPriceBlur">
@@ -57,7 +56,7 @@
         <p class="senior" v-show="is_seeFee">
             <span>高级模式</span>&emsp;
             <van-switch v-model="senior_checked" class="checked" />&emsp;
-        </p>
+        </p> -->
 
         <!-- 切换Token -->
         <van-action-sheet v-model="isSwitchToken" title="选择Token" round>
@@ -132,7 +131,7 @@
 <script>
 import pageheader from '@/components/pageheader'
 import addressBook from '@/components/address_book'
-import {transaction, get_ethInfo, get_ethMinerInfo} from '@/api/wallet' 
+import {transaction, next_nonce, get_ethMinerInfo} from '@/api/wallet' 
 import CryptoJS from 'crypto-js'
 import {ethers, providers } from 'ethers';
 export default {
@@ -161,7 +160,9 @@ export default {
             tokenList:[],
             pay_show:false,
             gasData:{},
-            go_Back:''
+            go_Back:'',
+            signData:'',
+            nonce:0
         }
     },
 
@@ -195,7 +196,7 @@ export default {
             console.log(this.walletInfo)
         }
        
-        // this.ethMinerInfo() //获取EHT矿工数据
+        this.ethMinerInfo() //获取EHT矿工数据
     },
     mounted(){
         window.onresize= ()=>{
@@ -236,25 +237,36 @@ export default {
     },
     methods:{
 
-        sure_pay(){    //确认支付
+        async sure_pay(){    //确认支付
             // const password =CryptoJS.MD5(this.transfer.wallet_password).toString().toLocaleUpperCase() 
             if(this.walletInfo.walletType == 'ETH'){
-                const provider = new providers.JsonRpcProvider("https://rinkeby.infura.io/v3/107f905703814dbd99b749a176eb9ede"); //链接服务器
-                var wallet = new ethers.Wallet(this.walletInfo.privateKey,provider);
-                console.log(wallet);
+                // const provider = new providers.JsonRpcProvider("https://rinkeby.infura.io/v3/107f905703814dbd99b749a176eb9ede"); //链接服务器
+                // var wallet = new ethers.Wallet(this.walletInfo.privateKey,provider);
+                let wallet = new ethers.Wallet(this.walletInfo.privateKey)
+                let BNBbal = ethers.utils.parseUnits(this.transfer.price, 18);
+                
                 var signTransaction={
-                to: this.transfer.address,
-                from: this.walletInfo.address,
-                nonce: 42,
-                gasLimit: 21000,//21000步
-                gasPrice: 1000000000, //1GWei=1000000000Wei
-                data: null,
-                value: this.transfer.price,
-                chainId: 4
+                    to: this.transfer.address,
+                    from: this.walletInfo.address,
+                    nonce: this.nonce,
+                    gasLimit: 21000,//21000步
+                    gasPrice: 1000000000, //1GWei=1000000000Wei
+                    data: null,
+                    value: BNBbal,
+                    chainId: 4
                 }
-                wallet.signTransaction(signTransaction).then(res=>{
-                console.log(res);
+                await wallet.signTransaction(signTransaction).then((res)=>{
+                    console.log( '签名：', res)
+                    this.signData = res
+                    // ethers.getDefaultProvider().sendTransaction(res).then((tx) => {
+                    //     console.log(tx)
+                    //     
+                    // });
+
+
                 });
+                
+               
                 console.log(signTransaction)
             }
             
@@ -272,27 +284,33 @@ export default {
                 let signature = txb.build().toHex()
                 console.log(signature)
             }
-        return
-            let params = {
-                ToAddress:this.transfer.address,
-                Amount:this.transfer.price,
-                TokenId:this.transferToken.tokenId,
-                GasPrice:this.senior_checked?this.transfer.custom_gasPrice:this.transfer.gasPrice,
-                Gas:this.transfer.gas,
-                Data:this.transfer.remark,
-                WalletPassword:this.transfer.wallet_password
-            }
+
+                console.log(this.signData)
+
+
+            // let params = {
+            //     ToAddress:this.transfer.address,
+            //     Amount:this.transfer.price,
+            //     TokenId:this.transferToken.tokenId,
+            //     GasPrice:this.senior_checked?this.transfer.custom_gasPrice:this.transfer.gasPrice,
+            //     Gas:this.transfer.gas,
+            //     Data:this.transfer.remark,
+            //     WalletPassword:this.transfer.wallet_password
+            // }
             this.$toast.loading({
                 duration: 0,
                 message: '交易中...',
                 forbidClick: true,
                 loadingType: 'spinner'
             });
-            transaction(params).then(res => {
-                this.transfer.wallet_password=''
+            transaction( {signedTransactionData:this.signData} ).then(res => {
                 this.$toast.clear();
                 if(res.code === 0){
-                    this.$toast.success('交易成功');  
+                    this.$toast.success('交易成功'); 
+                    this.$router.back() 
+                    return
+
+
                     let transferInfo = {
                         timeStamp:res.data.timestamp,
                         transactionHash:res.data.transactionHash,
@@ -392,28 +410,37 @@ export default {
 
         },
         ethMinerInfo(){    //获取矿工数据
-        console.log(   '0-0' ,this.transferToken)
-            let params = {
-                ContractAddress:this.transferToken.tokenAddress
-            }
-            this.$toast.loading({
-                duration: 0,       // 持续展示 toast
-                forbidClick: true, // 禁用背景点击
-                loadingType: 'spinner',
-                message: '加载中'
-            });
-            get_ethMinerInfo(params).then(res => {
-                this.$toast.clear();
+
+            next_nonce({address:this.walletInfo.address}).then(res => {
                 if(res.code === 0){
-                    this.gasData = res.data
-                    this.transfer.gas = this.gasData.avgGas
-                    this.transfer.gasPrice = this.gasData.gasPriceSafeLow +4
+                    this.nonce = res.data
                 }else{
                     this.$toast(res.messages)
                 }
             }).catch(err => {
                 this.$toast('网络异常')
             })
+            console.log(this.$store.state.minerData)
+            if(this.$store.state.minerData){
+                this.transfer.gasPrice = this.$store.state.minerData.gasPrice;
+                this.transfer.gas = this.$store.state.minerData.gas;
+                this.$store.state.minerData = ''
+            }else{
+                get_ethMinerInfo().then(res => {
+                    if(res.code === 0){
+                        console.log(res.data)
+                        this.transfer.gasPrice = res.data.midGasPrice
+                        this.public_js.SetStorage('transferCode',res.data)
+    
+                        // this.transfer.gas = this.gasData.avgGas
+                        // this.transfer.gasPrice = this.gasData.gasPriceSafeLow +4
+                    }else{
+                        this.$toast(res.messages)
+                    }
+                }).catch(err => {
+                    this.$toast('网络异常')
+                })
+            }
         }
     },
 }
@@ -510,6 +537,12 @@ export default {
                 width: 260px;
                 margin: auto;
             }
+        }
+        .timeCheck{
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+
         }
         .gwei{
             line-height: 20px;

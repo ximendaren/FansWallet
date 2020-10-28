@@ -1,42 +1,40 @@
 <template>
     <div class="container-dapp">
-        <div class="header">
-          <van-icon name="arrow-left" class="back" @click="$router.push({name:'wallet'})" />
-        </div>
+        <Pageheader />
         <div class="t-content">
         <van-pull-refresh v-model="isLoading" @refresh="refresh()" :disabled="refresh_state">
             <div class="tokenEcharts-box" @touchstart="refresh_state = false">
-                <p>总金额({{walletInfo.walletType}})</p>
+                <p>总金额({{walletInfo.walletType||walletInfo.tokenSymbol}})</p>
                 <p> {{walletInfo.totalAccount}}</p> 
                 <p>≈ ${{walletInfo.totalUsd }}</p>
             </div>      
             <van-tabs  color="#2364bc" v-model="activeType" :animated="true" :swipeable="true">
                 <van-tab v-for="(title,active) in tokenState" :key="active" :title="title" color="#2364bc">
-                        <div class="token-box" @scroll="scroll" >
-                        
-                            <div class="token-module" v-for="(item,index) in tokenTabs(transactionData,active)" :key="index" @click="viewTransferInfo(item)">
-                                <div class="hot-module van-hairline--bottom">
-                                    <div class="hot-img">
-                                        <img :src="imgState(item)" alt="">
-                                    </div>
-                                    <div class="hot-info">
-                                        <span>{{ public_js.ellipsAddress(item.fromAddress.toLowerCase()==walletInfo.address.toLowerCase()?item.toAddress:item.fromAddress,6) }}</span>
-                                        <span style="color:#999">{{public_js.transformationTime(item.timeStamp*1000)}}</span>
-                                        <span style="margin-top:5px" v-if="item.confirmations<12 && item.fromAddress.toLowerCase()==walletInfo.address.toLowerCase()">
-                                            <van-progress
-                                            :pivot-text="item.status==-1?'打包中':item.confirmations.toString()"
-                                            color="#2364bc"
-                                            :percentage="(item.confirmations ) /12*100"
-                                            />
-                                        </span> 
-                                    </div>
-                                    <div class="hot-state" :style="{color:item.fromAddress.toLowerCase()==walletInfo.address.toLowerCase()?'red':'#09bb07'}"  >
-                                        {{item.fromAddress.toLowerCase()==walletInfo.address.toLowerCase()?item.value==0?0:'-'+item.value:'+'+item.value}}
-                                    </div>
+                    <div class="token-box" @scroll="scroll" >
+                    
+                        <div class="token-module" v-for="(item,index) in tokenTabs(transactionData,active)" :key="index" @click="viewTransferInfo(item)">
+                            <div class="hot-module van-hairline--bottom">
+                                <div class="hot-img">
+                                    <img :src="imgState(item)" alt="">
+                                </div>
+                                <div class="hot-info">
+                                    <span>{{ public_js.ellipsAddress(item.fromAddress.toLowerCase()==walletInfo.address.toLowerCase()?item.toAddress:item.fromAddress,6) }}</span>
+                                    <span style="color:#999">{{public_js.transformationTime(item.timeStamp*1000)}}</span>
+                                    <span style="margin-top:5px" v-if="item.confirmations<12 && item.fromAddress.toLowerCase()==walletInfo.address.toLowerCase()">
+                                        <van-progress
+                                        :pivot-text="item.status==-1?'打包中':item.confirmations.toString()"
+                                        color="#2364bc"
+                                        :percentage="(item.confirmations ) /12*100"
+                                        />
+                                    </span> 
+                                </div>
+                                <div class="hot-state" :style="{color:item.fromAddress.toLowerCase()==walletInfo.address.toLowerCase()?'red':'#09bb07'}"  >
+                                    {{item.fromAddress.toLowerCase()==walletInfo.address.toLowerCase()?item.value==0?0:'-'+item.value:'+'+item.value}}
                                 </div>
                             </div>
+                        </div>
 
-                </div>    
+                    </div>    
                 </van-tab>
             </van-tabs>
         </van-pull-refresh>
@@ -52,7 +50,11 @@
 </template>
 <script>
 import {get_transactionList, get_walletBalance, get_newTransactionState, get_transferReceipt} from '@/api/wallet'
+import Pageheader from "@/components/pageheader";
 export default {
+    components: {
+        Pageheader,
+    },
     data() {
         return {
             tokenState:["全部","转出","转入","失败"],

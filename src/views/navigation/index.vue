@@ -135,7 +135,7 @@ export default {
 <style scoped lang="scss">
 .container-defi{
   .my-swipe .van-swipe-item {
-    height: 150px;
+    height: 180px;
     img{
         width: 100%;
         height: 100%;
@@ -190,6 +190,8 @@ export default {
                 width: 50px;
                 height: 50px;
                 margin-right: 15px;
+                border-radius: 5px;
+                overflow: hidden;
                 img{
                     width: 100%;
                     height: 100%;

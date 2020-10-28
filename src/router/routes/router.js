@@ -160,6 +160,12 @@ const routes = [
     component: () => import('@/views/wallet/wallet_transfer')
   },
   {
+    path: '/set_minerFee',
+    name: 'set_minerFee',
+    meta: { headline: '设置矿工费' },
+    component: () => import('@/views/wallet/set_minerFee')
+  },
+  {
     path: '/wallet_collection',
     name: 'wallet_collection',
     meta: { headline: '收款' },
@@ -475,6 +481,12 @@ const routes = [
     name: 'suremnemonic',
     // meta: {headline:'导出私钥'},
     component: () => import('@/views/walletmanage/walletdetail/suremnemonic/index'),
+  },
+  {
+    path: '/freePayment',
+    name: 'freePayment',
+    meta: {headline:'免密支付'},
+    component: () => import('@/views/walletmanage/walletdetail/freePayment/index'),
   },
   
   

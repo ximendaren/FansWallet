@@ -1,13 +1,12 @@
 <template>
-  <div id="app" :style="{'margin-top':$store.state.appTop }">
-    <div :style="{height:$store.state.appTop+'px',background:'#eee'}"></div>
+  <div id="app">
+     <!-- :style="{'padding-top':$store.state.appTop }" -->
+    <!-- <div :style="{height:$store.state.appTop+'px',background:'#eee'}"></div> -->
     <keep-alive>
       <router-view v-if="$route.meta.keepAlive"></router-view>
     </keep-alive>   
     <router-view v-if="!$route.meta.keepAlive"></router-view>
-    <!-- <keep-alive>
-    <router-view></router-view>
-    </keep-alive>    -->
+
   </div>
 </template>
 <script>
@@ -34,6 +33,5 @@ export default {
 <style lang="scss">
 #app{
   background: #fff;
-  height: 100vh;
 }
 </style>

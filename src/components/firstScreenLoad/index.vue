@@ -29,28 +29,10 @@ export default {
         // window.plus && plus.navigator.setFullscreen(false);
     },
     methods:{
-        // 获取发币功能信息
-        funcList(){
-            get_funcList({TokenType:'ETH'}).then(res => {
-                if(res.code === 0){
-                    if(window.plus){
-                        plus.storage.setItem('funcList',JSON.stringify(res.data))
-                    }else{
-                        localStorage.funcList = JSON.stringify(res.data)
-                    }
-                }else{
-                    this.$toast(res.messages)
-                }
-            }).catch(err => {
-                this.funcList()
-                this.$toast('网络异常')
-            })
-        },
          //检测新版本      
         versionInfo(){  
             if(window.plus){
-// this.$router.push({path:'/wallet'});return
-                app_version({appType:0}).then(res => {    
+                app_version().then(res => {    
                     if(res.code === 0){
                     
                         plus.runtime.getProperty(plus.runtime.appid, (wgtinfo) => {

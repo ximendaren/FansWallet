@@ -1,6 +1,6 @@
 <template>
   <div class="set">
-    <div class="header">我的</div>
+    <div class="header" :style="{'padding-top':$store.state.appTop }">我的</div>
     <div class="setfunction">
       <van-cell title="钱包管理" is-link center @click="$router.push({name:'walletmanage'})"/>
       <van-cell title="地址薄" is-link center @click="$router.push({name:'myaddress'})"/>
@@ -11,6 +11,7 @@
     <van-cell title="反馈&意见" is-link center @click="feedbackClick" />
     <van-cell title="清理缓存" is-link center :value="Cache" @click="clearCache" />
     <van-cell title="关于我们" is-link center @click="lookaboutus" />
+ 
     <van-cell title="指纹解锁"  center>
       <van-switch v-model="fingerprint" size="22px" @change="fingerprint_change()" />  
     </van-cell>
@@ -73,29 +74,7 @@ export default {
     clearCache() {
       this.Cache = "0k";
       this.$toast("清理完成");
-    },
-    withdraw() {
-      this.$dialog
-        .confirm({
-          // title: "标题",
-          message: "是否确认退出登录？"
-        })
-        .then(() => {
-          if(window.plus){
-            plus.storage.setItem("token",'');
-            localStorage.clear(); 
-          }else{
-            this.$cookies.remove("token");
-            this.$cookies.remove("refresh_token");
-            localStorage.clear()
-          }
-
-          this.$router.push({ name: "login" });
-          
-        })
-        .catch(() => {
-          // on cancel
-        });
+      // plus.storage.clear();
     },
     lookaboutus() {
       this.$router.push({ name: "aboutus" });

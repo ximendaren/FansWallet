@@ -1,6 +1,12 @@
 <template>
     <div class="container-nav">
-        <div class="header van-hairline--bottom">
+        <!-- <div class="header van-hairline--bottom">
+            <van-icon name="balance-pay" class="header-ico" @click="$router.push({path:'walletmanage',query:{switch:1}})" />
+            <span>钱包</span>
+            <van-icon name="scan" class="header-ico" @click="$router.push({name:'scan'})" />
+        </div> -->
+
+        <div class="header" :style="{'padding-top':$store.state.appTop}">
             <van-icon name="balance-pay" class="header-ico" @click="$router.push({path:'walletmanage',query:{switch:1}})" />
             <span>钱包</span>
             <van-icon name="scan" class="header-ico" @click="$router.push({name:'scan'})" />
@@ -85,6 +91,28 @@
                 <div class="qrcode" ref="qrCodeUrl" :style="{'margin-top':qrcodeHeight}"></div>
             </div>
         </van-popup>
+        <!-- 版本更新 -->
+        <van-dialog
+        v-model="update_show"
+        show-cancel-button
+        class="update-box"
+        :showCancelButton="isForce"
+        confirm-button-text="立即更新"
+        @confirm="installApk(versionData.url,1)"
+        @cancel="installApk(versionData.url,0)"
+        >
+        <div class="update-content">
+            <div class="update-img">
+            <img src="@/assets/images/home/appUpdate.png">
+            </div>
+            <div class="update-title">发现新版本 <br> 
+            <span>v{{versionData.versionNo}}</span>   
+            </div>
+            <p class="update-text" v-html="versionData.remark"></p>
+    
+        </div>
+        </van-dialog>
+
 
 
     </div>
@@ -119,6 +147,7 @@ export default {
         })
     },
     created(){
+        this.isUpdate()
         if(window.plus && plus.networkinfo.getCurrentType() == 1){
             this.$store.state.networkStatus = false
         }
@@ -126,7 +155,7 @@ export default {
             this.$store.state.appTop = (plus.navigator.getStatusbarHeight()*plus.screen.scale)/2 + 'px'
             plus.navigator.setFullscreen(false);
         }
-        // this.isUpdate()
+
         
         // if(this.$route.query.data){    //选择完默认钱包
         //     this.walletInfo = JSON.parse(this.$route.query.data)
@@ -283,7 +312,7 @@ export default {
 
         isUpdate(){   //检测新版本
             if(window.plus){
-                this.versionData =  JSON.parse(plus.storage.getItem('version_data'))
+                this.versionData = JSON.parse(plus.storage.getItem('version_data'))
                 if(this.versionData.app_version != this.versionData.versionNo){
                 this.update_show =true
                     if(this.versionData.forcedUpdate==1){
@@ -306,20 +335,17 @@ export default {
 .container-nav{
     // height: calc(100vh-44px);
     height: 100%;
-    .header{
-        height: 50px;
-        background: #fff;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 15px;
-        span{
-            font-size: 18px;
-        }
-        .header-ico{
-           font-size: 26px;
-        }
+  .header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 46px;
+    padding: 0 10px;
+    font-size: 22px;
+    span{
+        font-size: 18px;
     }
+  }
     .bg-box{
         height: calc(100vh - 102px);
     }
@@ -529,6 +555,38 @@ export default {
             }
         }
     }
-
+    .update-box{
+        height: 360px;
+        .update-content{
+        position: relative;
+            .update-img{
+            width: 100%;
+            height: 130px;
+            img{
+                width: 100%;
+                height: 100%;
+            }
+            }
+            .update-title{
+            position: absolute;
+            top: 16px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #fff;
+            font-size:18px;
+            span{
+                font-size:13px;
+            }
+            }
+            .update-text{
+            height: 180px;
+            padding: 10px 20px;
+            box-sizing: border-box;
+            white-space:pre-wrap;
+            overflow-y: auto;
+            }
+        }
+    }
 }
 </style>

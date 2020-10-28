@@ -46,11 +46,7 @@ export default {
     },
     methods:{
         createdWallet(){
-            if(!this.identityData.words){
-                this.$toast('助记词不能为空')
-                return
-            }
-            if(this.identityData.words.trim().split(' ').length != 12 && this.identityData.words.trim().split(' ').length != 24){
+            if(this.statusType==2 && this.identityData.words.trim().split(' ').length != 12 && this.identityData.words.trim().split(' ').length != 24){
                 this.$toast('助记词格式不正确')
                 return
             }
@@ -77,7 +73,7 @@ export default {
 <style scoped lang="scss">
 .container{
     height: 100vh;
-    position: relative;
+    // position: relative;
     .main{
         padding: 0 15px;
         .header-explain{
