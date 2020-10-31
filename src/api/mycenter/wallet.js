@@ -10,3 +10,5 @@ export const get_hotList= (params) => get('/v1/wallet/token/list-hot',params)  /
 
 export const get_searchToken= (params) => get('/v1/wallet/token/list',params)  //搜索货币
 
+export const get_walletData= (params) => get('/v1/wallet/list',params)  //获取代币数据
+

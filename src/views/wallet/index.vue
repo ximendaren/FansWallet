@@ -138,16 +138,17 @@ export default {
 
         }
     },
-    beforeRouteEnter (to, from, next) {
-        next(vm => {                 
-            if(from.name == 'walletmanage'&&vm.$route.params.isDefault){   
-                vm.walletInfo = {}            
-                vm.walletData()
-            }
-        })
-    },
+    // beforeRouteEnter (to, from, next) {
+    //     next(vm => {                 
+    //         if(from.name == 'walletmanage'&&vm.$route.params.isDefault){   
+    //             vm.walletInfo = {}            
+    //             vm.walletData()
+    //         }
+    //     })
+    // },
     created(){
         this.isUpdate()
+        this.walletData()
         if(window.plus && plus.networkinfo.getCurrentType() == 1){
             this.$store.state.networkStatus = false
         }
@@ -204,19 +205,28 @@ export default {
             item.address = this.walletInfo.address;
             this.$router.push({path:'/wallet_detail',query:{walletInfo:JSON.stringify(item)}})
         },
-        walletData(){    //获取钱包数据
-        this.isLoading = false;
-        return
+         //获取钱包数据
+        walletData(){   
+            this.isLoading = false;
+
             this.$toast.loading({
                 message: '加载中...',
                 duration: 0,
                 forbidClick: true,
                 mask:true
             });
-
-            get_walletData().then(res => {
+            let params = {
+                PageCount:10,
+                GetType:'After',
+                PagingParams:0,
+                Address:this.walletInfo.address,
+                ChainCode:this.walletInfo.walletType,
+            }
+            get_walletData(params).then(res => {
                 this.$toast.clear();
                 if(res.code === 0){
+
+
                     this.walletInfo = res.data
                     this.$store.commit('wallet_default',this.walletInfo)  //默认钱包
                     if(window.plus){
