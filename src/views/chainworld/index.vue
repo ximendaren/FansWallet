@@ -1,7 +1,7 @@
 <template>
   <div class="chainworld">
     <div class="navBg"></div>
-    <van-tabs v-model="world_active" class="reset" type="card" sticky :offset-top="parseInt($store.state.appTop)+ 10 +'px'" color="#2364bc">
+    <van-tabs v-model="world_active" class="reset" :style="{top:parseInt($store.state.appTop)+10+'px'}" type="card" sticky color="#2364bc">
       <van-tab title="行情">
         <!-- <van-tabs v-model="quotation_active" @click="quotationActive()"  color="#2364bc"> -->
           <!-- <van-tab title="关注">
@@ -144,7 +144,6 @@ export default {
     // if(this.quotation_data.length == 0){
     //   this.quotationRefresh()
     // }
-
   },
 
   methods:{
@@ -285,16 +284,18 @@ export default {
     color: #c9c9c9;
     margin: 20px 0;
   }
-  .navBg{
-    position: fixed;
-    top: 0px;
-    width: 100%;
-    height: 70px;
-    background: #fff;
-    z-index: 2;
-  }
+  // .navBg{
+  //   position: fixed;
+  //   top: 0px;
+  //   width: 100%;
+  //   height: 70px;
+  //   background: #fff;
+  //   z-index: 2;
+  // }
   .reset{
-    // padding-top: 8px !important;
+    width: 100%;
+    position: absolute;
+   
   }
 
   .quotation{

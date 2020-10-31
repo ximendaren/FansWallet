@@ -1,7 +1,7 @@
 <template>
     <div class="third-party">
         <div class="header" ref="header" :style="{'padding-top':$store.state.appTop }">
-            <!-- <div class="title"> {{linkData.title}} </div> -->
+            <div class="title" :style="{'padding-top':$store.state.appTop }"> {{title}} </div>
             <div class="operation">
                 <van-icon class="icon" name="ellipsis" @click="operation_show=true"  />
                 <van-icon class="icon" name="close" @click="$router.back()" />
@@ -37,10 +37,12 @@ export default {
             operation_show: false,
             linkData:{},
             bookmark:[],
+            title:''
         }
     },
     mounted(){
-        plus.webview.open(JSON.parse(this.$route.query.data).dappUrl,'window',{top:this.$refs.header.clientHeight+'px',bottom:'0px',
+        this.title = JSON.parse(this.$route.query.data).dappName
+        plus.webview.open(JSON.parse(this.$route.query.data).dappUrl,'window',{top:this.$refs.header.clientHeight+'px',bottom:'0px',zindex:0,
             progress:{
 				color:'#2364bc'
             } 

@@ -10,13 +10,13 @@
     </div>
     <div class="prompt-main">
         
-      <div class="prompt-word" v-for="(item,index) in confirm_wordList" :key="index" @click="wordList.push(item);confirm_wordList.splice(index,1)">{{item}}</div>
+      <div class="prompt-word" v-for="(item,index) in confirm_wordList" :key="index" @click="confirm_wordList.splice(index,1)">{{item}}</div>
         
     </div>
     <div class="prompt-wordlist">
-        <div class="prompt-word" v-for="(item,index) in wordList" :key="index" @click="confirm_wordList.push(item);wordList.splice(index,1)">{{item}}</div>
+        <div class="prompt-word" :style="{'opacity':confirm_wordList.includes(item)?'0.5':'1'}" v-for="(item,index) in wordList" :key="index" @click="checkWord(item)">{{item}}</div>
     </div>
-    <van-button type="info" class="btn" :disabled="wordList.length != 0" @click="finshClick">完成</van-button>
+    <van-button type="info" class="btn" :disabled="wordList.length != confirm_wordList.length" @click="finshClick">完成</van-button>
   </div>
 </template>
 <script>
@@ -46,7 +46,7 @@ export default {
     var decryptedStr = decryptedData.toString(CryptoJS.enc.Utf8);
     this.wordList = decryptedStr.split(' ')
 
-    this.validation_wordList = this.wordList
+    this.validation_wordList = JSON.parse(JSON.stringify(this.wordList))
     this.wordList = this.wordList.sort(function(){ return 0.5 - Math.random()})
   },
   methods: {
@@ -57,13 +57,18 @@ export default {
       this.showname = true;
     },
     finshClick() {
-      if(this.validation_wordList === this.confirm_wordList.join(' ')){
+      if(this.validation_wordList.join(' ') === this.confirm_wordList.join(' ')){
         this.$toast.success('助记词确认完成')
         this.$router.go(-3) 
       }else{
-        this.$toast.fail('助记词顺序不正确')
+        this.$toast('助记词顺序不正确')
       }
       
+    },
+    checkWord(item){
+      if(!this.confirm_wordList.includes(item)){
+        this.confirm_wordList.push(item);
+      }
     }
   }
 };

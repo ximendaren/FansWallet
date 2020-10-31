@@ -29,10 +29,10 @@
                     </div>
                     <div class="info-right">
                         <p class="more"><van-icon name="ellipsis" @click="walletDetail" /></p>
-                        <p v-if="isHideAmount" class="wallet-price"><b> {{walletInfo?parseFloat(walletInfo.totalAccount):0}}</b></p>
+                        <p v-if="isHideAmount" class="wallet-price"><b> {{parseFloat(totalAmount)}}</b></p>
                         <p v-else class="wallet-price"><b>∗∗∗∗</b></p>
-                        <p v-if="isHideAmount" class="conversion-price">≈${{walletInfo?Number(walletInfo.totalUsd).toFixed(2)!=0?Number(walletInfo.totalUsd).toFixed(2):0:0}} </p>
-                        <p v-else class="conversion-price">≈$<span class="hide-p">∗∗∗∗</span></p>
+                        <p v-if="isHideAmount" class="conversion-price">≈￥{{parseFloat(totalPriceCny)}} </p>
+                        <p v-else class="conversion-price">≈￥<span class="hide-p">∗∗∗∗</span></p>
                     </div>    
                 </div>
                 <div class="operation">
@@ -59,7 +59,7 @@
                                 </div>
                             </template>
                             <template slot="default">
-                                <div class="right-price"><b> {{  item?parseFloat(item.totalAccount):0 }}</b><br> ${{ Number(item.totalUsd).toFixed(2)}}</div>
+                                <div class="right-price"><b> {{  item?parseFloat(item.totalAccount):0 }}</b><br> ￥{{ Number(item.totalUsd).toFixed(2)}}</div>
                             </template>
                         </van-cell>
 
@@ -135,7 +135,8 @@ export default {
             update_show:false,  //更新弹框
             versionData:'',   //更新返回数据
             isForce:false,   //是否强制更新
-
+            totalAmount:0,
+            totalPriceCny:0,
         }
     },
     // beforeRouteEnter (to, from, next) {
@@ -148,7 +149,7 @@ export default {
     // },
     created(){
         this.isUpdate()
-        this.walletData()
+        
         if(window.plus && plus.networkinfo.getCurrentType() == 1){
             this.$store.state.networkStatus = false
         }
@@ -157,23 +158,12 @@ export default {
             plus.navigator.setFullscreen(false);
         }
 
-        
-        // if(this.$route.query.data){    //选择完默认钱包
-        //     this.walletInfo = JSON.parse(this.$route.query.data)
-        // }else{
-        //     if(window.plus){
-        //        this.walletInfo =  JSON.parse(plus.storage.getItem('tokenList'))
-        //     }else{
-        //        this.walletInfo =  JSON.parse(localStorage.getItem('tokenList'))
-        //     }
-
-        // }
     },
     activated() {  
         this.walletInfo = this.public_js.GetStorage('walletInfo');
         this.walletInfo = this.walletInfo.find(n=> n.isMain ==1)
         console.log(this.walletInfo)
-
+        this.walletData()
     },
     methods:{
         scroll(event){
@@ -207,14 +197,6 @@ export default {
         },
          //获取钱包数据
         walletData(){   
-            this.isLoading = false;
-
-            this.$toast.loading({
-                message: '加载中...',
-                duration: 0,
-                forbidClick: true,
-                mask:true
-            });
             let params = {
                 PageCount:10,
                 GetType:'After',
@@ -223,27 +205,33 @@ export default {
                 ChainCode:this.walletInfo.walletType,
             }
             get_walletData(params).then(res => {
-                this.$toast.clear();
+                setTimeout(() => {
+                    this.isLoading = false
+                },1000)
                 if(res.code === 0){
+                    let walletData = this.public_js.GetStorage('walletInfo');
+                    let i = walletData.findIndex(n => n.isMain === 1)
+                    walletData[i].assetsToken.forEach(item => {
+                        res.data.forEach(item2 => {
+                            if(item.tokenSymbol == item2.tokenSymbol){
+                                item.totalAccount = item2.amount
+                                item.totalUsd = item2.tokenPriceCny * item2.amount
+                            }
+                        })
+                    })
+                    res.data.forEach(item => {
+                        this.totalAmount += item.amount
+                        this.totalPriceCny += item.amount * item.tokenPriceCny
+                    })
 
-
-                    this.walletInfo = res.data
-                    this.$store.commit('wallet_default',this.walletInfo)  //默认钱包
-                    if(window.plus){
-                        plus.storage.setItem('tokenList',JSON.stringify(res.data))
-                    }else{
-                        localStorage.setItem('tokenList',JSON.stringify(res.data))
-                    }
-                    if(this.isLoading){
-                        this.$toast('刷新成功');
-                    }
-                    this.isLoading = false;
+                    this.public_js.SetStorage('walletInfo',walletData);
+                    
                 }else{
                     this.$toast(res.messages)
                 }
             }).catch(err => {
-                this.$toast.clear();
                 this.$toast('网络异常')
+                this.isLoading = false
             })
         },
         showQr(){

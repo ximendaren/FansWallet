@@ -108,6 +108,14 @@ export default {
     },
     methods:{
         confirm(){
+            if(this.speed === 4 && this.inputGasPrice == '' ){
+                this.$toast('GasPrice不能为空')
+                return
+            }
+            if(this.speed === 4 && this.gas == '' ){
+                this.$toast('Gas不能为空')
+                return
+            }
             let minerData = {
                 gasPrice:0,
                 gas:21000
