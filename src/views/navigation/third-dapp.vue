@@ -3,7 +3,7 @@
         <div class="header" ref="header" :style="{'padding-top':$store.state.appTop }">
             <div class="title" :style="{'padding-top':$store.state.appTop }"> {{title}} </div>
             <div class="operation">
-                <van-icon class="icon" name="ellipsis" @click="operation_show=true"  />
+                <van-icon class="icon" name="ellipsis" @click="operation"  />
                 <van-icon class="icon" name="close" @click="$router.back()" />
             </div>
         </div>
@@ -37,12 +37,13 @@ export default {
             operation_show: false,
             linkData:{},
             bookmark:[],
-            title:''
+            title:'',
         }
     },
     mounted(){
-        this.title = JSON.parse(this.$route.query.data).dappName
-        plus.webview.open(JSON.parse(this.$route.query.data).dappUrl,'window',{top:this.$refs.header.clientHeight+'px',bottom:'0px',zindex:0,
+        this.linkData = JSON.parse(this.$route.query.data)
+        this.title = this.linkData.dappName
+        plus.webview.open(this.linkData.dappUrl,'window',{top:this.$refs.header.clientHeight+'px',bottom:0,zindex:0,
             progress:{
 				color:'#2364bc'
             } 
@@ -52,22 +53,22 @@ export default {
     beforeDestroy(){
         plus.webview.close( 'window' );
     },
-    // created(){
-    //     this.linkData = JSON.parse(this.$route.query.data)
-    //     this.bookmark = this.public_js.GetStorage('bookmark') || []
-    //     console.log(this.linkData)
-    // },
     computed:{
         isCollet(){
             return this.bookmark.some(n => n.dappId === this.linkData.dappId)
         }
     },
     methods:{
+        operation(){
+            this.operation_show=true;
+            // plus.webview.hide('window')
+        },
         copyUrl(e){
             this.$toast('复制成功');
             this.operation_show = false
         },
         collectionDapp(){
+            // plus.webview.show('window')
             if(this.isCollet){
                 let index = this.bookmark.findIndex(n => n.dappId === this.linkData.dappId);
                 this.bookmark.splice(index,1)

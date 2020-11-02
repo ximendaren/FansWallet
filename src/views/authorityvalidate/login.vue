@@ -21,7 +21,14 @@ export default {
         return{
           
         }
-    }
+    },
+    created(){
+        if(window.plus){
+            this.$store.state.appTop = (plus.navigator.getStatusbarHeight()) + 'px'
+            plus.navigator.setFullscreen(false);
+        }
+
+    },
 }
 </script>
 <style lang="scss" scoped>

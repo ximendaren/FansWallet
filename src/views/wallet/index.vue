@@ -6,14 +6,14 @@
             <van-icon name="scan" class="header-ico" @click="$router.push({name:'scan'})" />
         </div> -->
 
-        <div class="header" :style="{'padding-top':$store.state.appTop}">
+        <div class="header" ref="header" :style="{'padding-top':$store.state.appTop}">
             <van-icon name="balance-pay" class="header-ico" @click="$router.push({path:'walletmanage',query:{switch:1}})" />
             <span>钱包</span>
             <van-icon name="scan" class="header-ico" @click="$router.push({name:'scan'})" />
         </div>
         
         <van-pull-refresh v-model="isLoading" @refresh="walletData()" :disabled="scrollTop>0">
-        <div class="bg-box">
+        <div class="bg-box" ref="bgBox">
             <div class="wallet-box">
                 <div class="info-box">
                     <div class="info-left">
@@ -154,7 +154,7 @@ export default {
             this.$store.state.networkStatus = false
         }
         if(window.plus){
-            this.$store.state.appTop = (plus.navigator.getStatusbarHeight()*plus.screen.scale)/2 + 'px'
+            this.$store.state.appTop = (plus.navigator.getStatusbarHeight()) + 'px'
             plus.navigator.setFullscreen(false);
         }
 
@@ -164,6 +164,9 @@ export default {
         this.walletInfo = this.walletInfo.find(n=> n.isMain ==1)
         console.log(this.walletInfo)
         this.walletData()
+    },
+    mounted(){
+        this.$refs.bgBox.style.height = window.screen.height- this.$refs.header.clientHeight-50-parseInt(this.$store.state.appTop)+'px'
     },
     methods:{
         scroll(event){
@@ -345,13 +348,13 @@ export default {
     }
   }
     .bg-box{
-        height: calc(100vh - 102px);
+        // height: calc(100vh - 102px);
     }
     .wallet-box{
         width: 355px;
         height: 150px;
         background: url('../../assets/images/other/walletBg.png') 100%;
-        margin: 8px auto;
+        margin: 6px auto;
         border-radius: 13px;
         color: #fff;
         font-size: 16px;
@@ -449,8 +452,8 @@ export default {
         }
     }
     .token-list{
-        height: calc(100vh - 290px);
-        overflow-y: auto;
+        // height: calc(100vh - 290px);
+        // overflow-y: auto;
         .token-box{
 
             .left-logo{
