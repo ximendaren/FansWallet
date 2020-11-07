@@ -111,7 +111,7 @@ export default {
             })
             
         },
-        goDapp(item){
+        goDapp(item){   
             let isVisit = this.public_js.GetStorage('isVisit') || [];
             if(isVisit.some(n=> n == item.dappName)){
                 this.$router.push({ path:'/thirdParty',query:{ data:JSON.stringify(item)} })

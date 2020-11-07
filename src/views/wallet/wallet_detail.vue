@@ -2,42 +2,64 @@
     <div class="container-dapp">
         <Pageheader />
         <div class="t-content">
-        <van-pull-refresh v-model="isLoading" @refresh="refresh()" :disabled="refresh_state">
+        
             <div class="tokenEcharts-box" @touchstart="refresh_state = false">
-                <p>总金额({{walletInfo.walletType||walletInfo.tokenSymbol}})</p>
+                <p>{{walletInfo.tokenSymbol||walletInfo.walletType}}</p>
                 <p> {{walletInfo.totalAccount}}</p> 
-                <p>≈ ${{walletInfo.totalUsd }}</p>
-            </div>      
+                <p>≈ ￥{{walletInfo.totalUsd.toFixed(2) }}</p>
+            </div>  
+            <div class="pending-box">
+                <div class="pending-module" v-for="(item,index) in pendingData" :key="index">
+                    <span>
+                        <van-loading type="spinner" color="#1989fa" class="icon" size="18px" />
+                        {{public_js.ellipsAddress(item.to)}} (打包中)  </span>
+                    <span> -{{ item.valueToEth }} </span>
+                </div>
+            </div>
+
             <van-tabs  color="#2364bc" v-model="activeType" :animated="true" :swipeable="true">
                 <van-tab v-for="(title,active) in tokenState" :key="active" :title="title" color="#2364bc">
                     <div class="token-box" @scroll="scroll" >
-                    
-                        <div class="token-module" v-for="(item,index) in tokenTabs(transactionData,active)" :key="index" @click="viewTransferInfo(item)">
-                            <div class="hot-module van-hairline--bottom">
-                                <div class="hot-img">
-                                    <img :src="imgState(item)" alt="">
-                                </div>
-                                <div class="hot-info">
-                                    <span>{{ public_js.ellipsAddress(item.fromAddress.toLowerCase()==walletInfo.address.toLowerCase()?item.toAddress:item.fromAddress,6) }}</span>
-                                    <span style="color:#999">{{public_js.transformationTime(item.timeStamp*1000)}}</span>
-                                    <span style="margin-top:5px" v-if="item.confirmations<12 && item.fromAddress.toLowerCase()==walletInfo.address.toLowerCase()">
-                                        <van-progress
-                                        :pivot-text="item.status==-1?'打包中':item.confirmations.toString()"
-                                        color="#2364bc"
-                                        :percentage="(item.confirmations ) /12*100"
-                                        />
-                                    </span> 
-                                </div>
-                                <div class="hot-state" :style="{color:item.fromAddress.toLowerCase()==walletInfo.address.toLowerCase()?'red':'#09bb07'}"  >
-                                    {{item.fromAddress.toLowerCase()==walletInfo.address.toLowerCase()?item.value==0?0:'-'+item.value:'+'+item.value}}
+                        <van-pull-refresh v-model="isLoading" @refresh="refresh()" :disabled="refresh_state" style="min-height: 50vh;">  
+                        <van-list
+                            v-model="loading"
+                            :finished="finished"
+                            finished-text="没有更多了"
+                            :immediate-check="false "
+                            @load="transferList()"
+                        >        
+                            <div class="token-module" v-for="(item,index) in tokenTabs(transactionData,active)" :key="index" @click="viewTransferInfo(item)">
+                                <div class="hot-module van-hairline--bottom">
+                                    <div class="hot-img">
+                                        <img :src="imgState(item)" alt="">
+                                    </div>
+                                    <div class="hot-info">
+                                        <span>{{ public_js.ellipsAddress(item.from.toLowerCase()==walletInfo.address.toLowerCase()?item.to:item.from,6) }}</span>
+                                        <span style="color:#999">{{public_js.transformationTime(item.timestamp*1000)}}</span>
+
+                                        <span style="margin-top:5px" v-if="$store.state.lastBlockNumber&&$store.state.lastBlockNumber - item.blockNumber<12 && item.from.toLowerCase()==walletInfo.address.toLowerCase()">
+                                            <van-progress
+                                            :pivot-text="$store.state.lastBlockNumber - item.blockNumber<0?'0':($store.state.lastBlockNumber - item.blockNumber).toString()"
+                                            color="#2364bc"
+                                            :percentage="($store.state.lastBlockNumber - item.blockNumber ) /12*100"
+                                            />
+                                        </span> 
+
+                                        
+                                    </div>
+                                    <div class="hot-state" :style="{color:item.from.toLowerCase()==walletInfo.address.toLowerCase()?'red':'#09bb07'}">
+                                        {{item.from.toLowerCase()==walletInfo.address.toLowerCase()?item.valueToEth==0?0:'-'+item.valueToEth:'+'+item.valueToEth}}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </van-list>
+                        <div class="foot-fill"></div>
+                        </van-pull-refresh>
 
                     </div>    
                 </van-tab>
             </van-tabs>
-        </van-pull-refresh>
+        
         </div>
 
         <div class="t-footer van-hairline--top">
@@ -49,7 +71,8 @@
     </div>
 </template>
 <script>
-import {get_transactionList, get_walletBalance, get_newTransactionState, get_transferReceipt} from '@/api/wallet'
+import {get_transactionList, get_walletBalance, get_newTransactionState, get_transferReceipt, get_transferReceipt_erc20} from '@/api/wallet'
+import {get_transferList, get_transferList_erc20, get_transferInfo, get_chainInfo } from '@/api/wallet'
 import Pageheader from "@/components/pageheader";
 export default {
     components: {
@@ -61,48 +84,74 @@ export default {
             walletInfo:{},
             transactionData:[],
             isLoading: false,
+            loading: false,
+            finished: false,
             activeType:0,
             scrollTop:0,
             tokenBalance:{},
             transferInfo:{},
-            timer:'',
             refresh_state:false,
             routerBack:false,
+            pendingData:[],
+            transferTimer:null,
+            timer:null,
+            transferData:[],
         }
     },
-    created(){    
+    created(){     
+        if(this.$route.query.walletInfo){
+            this.walletInfo = JSON.parse(this.$route.query.walletInfo);    
+            this.$store.commit('walletInfo',this.walletInfo)
+        }else{
+            this.walletInfo  = this.public_js.GetStorage('walletInfo').find(n => n.isMain).assetsToken[0]
+        }
+        // this.$route.meta.headline = this.walletInfo.tokenSymbol || this.walletInfo.walletType
+        this.transferList()   //交易纪录
+        this.routerBack = false
+        this.transactionData = [];
+        this.tokenBalance = {}
+
+
+        this.transferData = this.public_js.GetStorage('Trading') || [];
+        this.transferData = this.transferData.filter(n => n.tokenSymbol === this.walletInfo.tokenSymbol)
+        if(this.transferData.length>0){
+            this.tradingList()
+            this.transferTimer = setInterval(() => {
+                this.tradingList()
+            },5000)
+        }
+        this.chainInfo()
+        this.timer = setInterval(() => {
+            this.chainInfo()
+        },10000)
+
 
     },
-    beforeRouteEnter (to, from, next) {
-        next(vm => {
+    beforeDestroy(){
+        clearInterval(this.transferTimer);
+        clearInterval(this.timer);
+    },
+    // beforeRouteEnter (to, from, next) {
+    //     next(vm => {
             
-            if(from.name == 'wallet'){               
-                vm.walletInfo = JSON.parse(vm.$route.query.walletInfo); 
-                vm.$store.commit('walletInfo',vm.walletInfo)
-                vm.transactionList()   //交易纪录
-                vm.walletBalance()   //获取金额
-                vm.routerBack = false
-                vm.transactionData = [];
-                vm.tokenBalance = {}
-            }else if(from.name == 'wallet_transfer'){
-                if(vm.$route.query.isTransfer){
-                    vm.routerBack = vm.$route.query.isTransfer
-                    vm.walletInfo = vm.$store.state.walletInfo
-                    vm.transactionList()
-                    vm.walletBalance()
-                }
-            }
-        })
-    },
-    // activated(){
-        
-
+    //         if(from.name == 'wallet'){               
+    //             vm.walletInfo = JSON.parse(vm.$route.query.walletInfo); 
+    //             vm.$store.commit('walletInfo',vm.walletInfo)
+    //             vm.transferList()   //交易纪录
+    //             vm.walletBalance()   //获取金额
+    //             vm.routerBack = false
+    //             vm.transactionData = [];
+    //             vm.tokenBalance = {}
+    //         }else if(from.name == 'wallet_transfer'){
+    //             if(vm.$route.query.isTransfer){
+    //                 vm.routerBack = vm.$route.query.isTransfer
+    //                 vm.walletInfo = vm.$store.state.walletInfo
+    //                 vm.transactionList()
+    //                 vm.walletBalance()
+    //             }
+    //         }
+    //     })
     // },
-    // deactivated(){  
-
-
-    // },
-
     watch:{
         scrollTop(num){
             if(num > 0){
@@ -113,6 +162,122 @@ export default {
         }
     },
     methods:{
+        //交易记录
+        transferList(){
+            if(this.walletInfo.contractProtocol &&  this.walletInfo.contractProtocol == 'ERC20' ){
+
+                let params = {
+                    PageCount:10,
+                    GetType:'After',
+                    PagingParams:this.transactionData.length,
+                    Address: this.walletInfo.address,
+                    ContractAddress: this.walletInfo.contractAddress,
+                }
+                get_transferList_erc20(params).then(res => {    //ERC20
+                    this.isLoading =false
+                    if(res.code === 0){
+                        this.transactionData = this.transactionData.concat(res.data) 
+
+                        this.loading = false;
+                        if (this.transactionData.length >= res.totalCount) {
+                            this.finished = true;
+                        }
+
+                    }else{
+                        this.$toast(res.messages)
+                    }
+                }).catch(err => {
+                    this.$toast('网络异常')
+                })
+            } else {
+                let params = {
+                    PageCount:10,
+                    GetType:'After',
+                    PagingParams:this.transactionData.length,
+                    Address: this.walletInfo.address
+                }
+                get_transferList(params).then(res => {     //eth
+                    this.isLoading =false
+                    if(res.code === 0){
+                        this.transactionData = this.transactionData.concat(res.data) 
+                        this.loading = false;
+                        if (this.transactionData.length >= res.totalCount) {
+                            this.finished = true;
+                        }
+                    }else{
+                        this.$toast(res.messages)
+                    }
+                }).catch(err => {
+                    this.$toast('网络异常')
+                })
+
+            }
+        },
+        //转账中状态
+        tradingList(){
+            // console.log(    '--',this.transferData)
+            if(!this.transferData.length){
+                 this.public_js.SetStorage('Trading',this.transferData)
+                clearInterval(this.transferTimer);
+                return
+            }
+            //ERC20
+            if(this.walletInfo.contractProtocol &&  this.walletInfo.contractProtocol == 'ERC20' ){
+                this.transferData.forEach((item,index) => {
+                    get_transferReceipt_erc20({TransactionHash:item.transactionHash}).then(res => {
+                        if(res.code === 0){
+                            if(res.data){
+                                this.transferData.splice(index,1)
+                                this.transferList()
+                            }
+                        }else{
+                            this.$toast(res.messages)
+                        }
+                    }).catch(err => {
+                        // this.$toast('网络异常')
+                    })
+                })  
+            //ETH
+            }else{
+                this.transferData.forEach((item,index) => {
+                    get_transferReceipt({TransactionHash:item.transactionHash}).then(res => {
+                        if(res.code === 0){
+                            if(res.data){
+                                this.transferData.splice(index,1)
+                                 this.transferList()
+                            }
+                        }else{
+                            this.$toast(res.messages)
+                        }
+                    }).catch(err => {
+                        // this.$toast('网络异常')
+                    })
+                })  
+            }
+                
+                this.pendingData = this.transferData
+               
+
+        },
+        //区块高度
+        chainInfo(){
+            // clearInterval(this.transferTimer)
+            let chainCode  = this.public_js.GetStorage('walletInfo').find(n => n.isMain).walletType
+            get_chainInfo({ChainCode:chainCode}).then(res => {
+                if (res.code === 0) {
+                    this.$store.commit('blockNumber',res.data.lastBlockNumber)
+                } else {
+                    this.$toast(res.data.messages);
+                }
+            })
+            .catch(err => {
+                // this.$toast("网络异常");
+            });
+        },
+
+
+
+
         transactionList(load){   //获取交易纪录
         return
             this.transactionData = []
@@ -279,18 +444,19 @@ export default {
 
         },
         refresh(){    //刷新
-            this.transactionList()
-            this.walletBalance()
+            setTimeout(() => {
+                this.transferList()
+            },500)
         },
         scroll(event) {
             this.scrollTop = event.target.scrollTop
         },
         imgState(item){   //导出导入图片
-            if(item.confirmations<12){
+            if(item.confirmations&&item.confirmations<12){
                 return require('@/assets/images/wallet/loading.png')
-            }else if(item.fromAddress.toLowerCase()===this.walletInfo.address.toLowerCase()){
+            }else if(item.from.toLowerCase()===this.walletInfo.address.toLowerCase()){
                 return require('@/assets/images/wallet/export.png')
-            }else if(item.fromAddress.toLowerCase()!==this.walletInfo.address.toLowerCase()){
+            }else if(item.from.toLowerCase()!==this.walletInfo.address.toLowerCase()){
                 return require('@/assets/images/wallet/import.png')
             }
         },
@@ -298,9 +464,9 @@ export default {
             if(active==0){
                 return transactionData
             }else if(active==1){
-                return transactionData.filter(n => n.fromAddress.toLowerCase()===this.walletInfo.address.toLowerCase() )
+                return transactionData.filter(n => n.from.toLowerCase()===this.walletInfo.address.toLowerCase() )
             }else if(active==2){
-                return transactionData.filter(n => n.fromAddress.toLowerCase()!==this.walletInfo.address.toLowerCase() )
+                return transactionData.filter(n => n.from.toLowerCase()!==this.walletInfo.address.toLowerCase() )
             }
         },
         walletBalance(){   //获取金额
@@ -333,6 +499,7 @@ export default {
         viewTransferInfo(item){
             item.tokenAddress = this.walletInfo.tokenAddress;
             item.address = this.walletInfo.address
+            item.tokenSymbol = this.walletInfo.tokenSymbol
             this.$router.push({path:'/transaction_detail',query:{transactionInfo:JSON.stringify(item)}})
         }
 
@@ -353,25 +520,40 @@ export default {
         }
     }
     .t-content{
-        
         .tokenEcharts-box{
-            height: 140px;
+            height: 120px;
             background: #eee;
             font-size: 18px;
             text-align: center;
             padding-top: 20px;
             p:nth-child(2){
                 font-size: 30px;
-                margin: 10px 0 5px;
                 font-weight: 600;
             }
             p:nth-child(3){
                 font-size: 16px;
             }
         }
+        .pending-box{
+            .pending-module{
+                height: 40px;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 10px;
+                color: rgb(91, 166, 216);
+                span:nth-child(1){
+                    font-size: 13px;
+                }
+                .icon{
+                    display: inline-block;
+                }
+            }
+        }
         .token-box{
-            height: calc(100vh-305px);
-            overflow-y: scroll;
+            // height: calc(100vh-305px);
+            // overflow-y: scroll;
             .hot-module{
                 min-height: 56px;
                 padding: 5px 10px;
@@ -419,6 +601,9 @@ export default {
                     display: inline-block;
                 }
             }
+            .foot-fill{
+                height:50px;
+            }
         }
 
     }
@@ -438,6 +623,8 @@ export default {
             border: 0;
         }
     }
-
+    /deep/.van-tabs__line{
+        z-index: 0;
+    }
 }
 </style>

@@ -52,15 +52,16 @@
                     
                 </div>
                 <div class="wallet-name" v-if="typeActive==1">
-                    <van-field v-model="keyStorePassword" placeholder="请输入KeyStore密码" class="input" :border="false" />
+                    <van-field v-model="keyStorePassword" type="password" placeholder="请输入KeyStore密码" class="input" :border="false" />
+                    <van-field v-model="password" type="password" placeholder="请输入新密码" class="input" :border="false" />
                 </div>
                 <!-- 钱包名称 -->
-                <div class="wallet-name">
+                <div class="wallet-name" v-if="typeActive!=1">
                     <p>钱包名称</p>
                     <van-field v-model="walletName" placeholder="输入钱包名称" :border="false" class="input" />
                 </div>
                 <!-- 设置密码 -->
-                <div class="setPassword-box">
+                <div class="setPassword-box" v-if="typeActive!=1">
                     <p>设置钱包密码</p>
                     <van-field v-model="password" placeholder="输入钱包密码" type="password" :border="false" class="input" oninput="value=value.replace(/[\W]/g,'')" />
                     <van-field v-model="ag_password" placeholder="再次输入密码" type="password" :border="false" class="input" oninput="value=value.replace(/[\W]/g,'')" />
@@ -108,7 +109,8 @@ export default {
             remark:'',
             walletName:'',
             keyStorePassword:'',
-            walletToken:''
+            walletToken:'',
+            keystore:''
         }
     },
     created(){
@@ -130,7 +132,7 @@ export default {
                     if(!this.password || !this.ag_password || !this.wordText || !this.walletName ) return true                    
                     break;
                 case 1:
-                    if(!this.password || !this.ag_password || !this.keystoreText || !this.walletName ) return true
+                    if(!this.password ||!this.keyStorePassword || !this.keystoreText ) return true
                     break;
                 case 2:
                     if(!this.password || !this.ag_password || !this.privatekeyText || !this.walletName ) return true
@@ -142,71 +144,110 @@ export default {
         }
     },
     methods:{
-        start_import(item){    
-            if(this.password.length <6){
-                this.$toast('密码不能小于6位')
-                return
+        async start_import(item){  
+            if(this.typeActive!=1){
+                if(this.password.length <6){
+                    this.$toast('密码不能小于6位')
+                    return
+                }
+                if(this.password !== this.ag_password){
+                    this.$toast('两次输入的密码不一致')
+                    return
+                }
+            }else{ 
+                if(this.password.length <6){
+                    this.$toast('新密码不能小于6位')
+                    return
+                }
             }
-            if(this.password !== this.ag_password){
-                this.$toast('两次输入的密码不一致')
-                return
-            }
-            // if(!(/\d+/.test(this.password) && /[a-zA-Z]+/.test(this.password))) {
-            //     this.$toast("钱包密码必须包含数字和字母");
-            //     return;
-            // }
-            // let params = {
-            //     WalletName:this.walletName,
-            //     Password:this.password,
-            //     Remark:this.remark,
-            //     HeadPortrait:1,
-            //     WalletType:'ETH',
-            //     PrivateKey:this.privatekeyText,
-            //     Words:this.wordText,
-            //     KeyStore:this.keystoreText,
-            //     KeyStorePassword:this.keyStorePassword,
-            //     ImportType:item.value,                
-            // }
-
-
-
-            var ethers = require('ethers');
-            var wallet= ethers.Wallet.fromMnemonic(this.wordText);
-
-            console.log(wallet)
-            'shine dog venue hand question scan hero tennis room victory chimney tower'
-
-            var password = CryptoJS.AES.encrypt(this.password, CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
-                mode: CryptoJS.mode.ECB,
-                padding: CryptoJS.pad.Pkcs7
-            });
-            var mnemonicWords = CryptoJS.AES.encrypt(this.wordText, CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
-                mode: CryptoJS.mode.ECB,
-                padding: CryptoJS.pad.Pkcs7
-            });
-
-            let walletInfo = this.public_js.GetStorage('walletInfo') || []
-            if(walletInfo.length> 0){
-                walletInfo.forEach(item => {
-                    item.isMain = 0
-                })
-            }
-
-            let assetsToken;
             if(this.walletToken === 'ETH'){ 
+                var ethers = require('ethers');
+                var wallet;
+                var mnemonicWords;
+                var keystore;
+                var assetsToken;
+                var walletInfo = this.public_js.GetStorage('walletInfo') || []
+                // var wallet1=new ethers.Wallet("0x10814c591400f864824a8f535524e6afea5134b349370174556a50c648e63329");
+                switch (this.typeActive) {
+                    case 0:   //助记词
+                        wallet= ethers.Wallet.fromMnemonic(this.wordText);
+                        mnemonicWords = CryptoJS.AES.encrypt(this.wordText, CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
+                            mode: CryptoJS.mode.ECB,
+                            padding: CryptoJS.pad.Pkcs7
+                        });
+                        break;
+                    case 1:  //keystore
+                        await ethers.Wallet.fromEncryptedJson(this.keystoreText, this.keyStorePassword).then((res) => {
+                            wallet = res;
+                        }).catch(err => {
+                            this.$toast('keyStore密码错误')
+                            return
+                        });
+                        keystore = this.keystoreText;
+                        break;
+                    case 2:   //私钥
+                        wallet = new ethers.Wallet(this.privatekeyText);
+                        break;
+                
+                    default:
+                        break;
+                }
 
+                // console.log(walletInfo ,'===', wallet.address )
+                if(walletInfo.some(n => n.address ===  wallet.address )){
+                    this.$dialog.alert({
+                    message: '已有该钱包，请勿重复创建',
+                    }).then(() => {
+                    // on close
+                    });
+                    return
+                }
+       
+                // 'shine dog venue hand question scan hero tennis room victory chimney tower'
+
+                var password = CryptoJS.AES.encrypt(this.password, CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
+                    mode: CryptoJS.mode.ECB,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+
+                // keystore
+                if(this.typeActive != 1){
+                    var wk = new ethers.Wallet(wallet.privateKey);
+                    this.$toast.loading({
+                        duration: 0, // 持续展示 toast
+                        forbidClick: true,
+                        loadingType: 'spinner',
+                        message: '导入中...',
+                    });
+                    await wk.encrypt(this.password,percent=>{}).then(res => {
+                        keystore = res
+                        this.$toast.clear();
+                    }).catch(err => {
+                        this.$toast('创建失败')
+                        this.$toast.clear();
+                    })
+
+                }
+              
+                if(walletInfo.length> 0){
+                    walletInfo.forEach(item => {
+                        item.isMain = 0
+                    })
+                }
+               
                 assetsToken = [{
-                    contractAddress:wallet.address,
+                    address:wallet.address,
+                    contractAddress:'',
                     tokenLogo:'',
                     walletType:'ETH',
-                    tokenSymbol:this.walletName,
+                    tokenSymbol:'ETH',
                     totalAccount:0,
                     totalUsd:0,
                 }]
-               
+    
                 walletInfo.push({
                     userName:'',
-                    walletName:this.walletName,
+                    walletName:this.walletName || 'ETH',
                     password:password.ciphertext.toString(),
                     remark:this.remark,
                     isMain:1,
@@ -214,9 +255,11 @@ export default {
                     walletType:'ETH',
                     totalAccount:0,
                     totalUsd:0,
-                    mnemonic:mnemonicWords.ciphertext.toString(),
+                    mnemonic:mnemonicWords?mnemonicWords.ciphertext.toString():'',
                     privateKey:wallet.privateKey,
-                    assetsToken:assetsToken
+                    assetsToken:assetsToken,
+                    publicKey:wallet.publicKey,
+                    keystore:keystore
                 })
             }
             if(this.walletToken === 'BTC'){ 
@@ -235,12 +278,20 @@ export default {
                 // });
 
                     assetsToken = [{
-                        contractAddress:btcWallet.address,
+                        address:btcWallet.address,
                         tokenLogo:'',
                         walletType:'BTC',
-                        tokenSymbol:this.walletName,
+                        tokenSymbol:'BTC',
                         totalAccount:0,
                         totalUsd:0,
+                    },                    
+                    {
+                        address:btcWallet.address,
+                        walletType:'BTC',
+                        tokenSymbol:'USDT',
+                        totalAccount:0,
+                        totalUsd:0,
+                        contractAddress:''
                     }]
                     walletInfo.push({
                         userName:'',
@@ -254,7 +305,8 @@ export default {
                         totalUsd:0,
                         mnemonic:mnemonicWords.ciphertext.toString(),
                         privateKey:btcWallet.privateKey,
-                        assetsToken:assetsToken
+                        assetsToken:assetsToken,
+                        keystore:keystore
                     })
 
                 });
@@ -290,6 +342,7 @@ export default {
                 padding: 5px 10px;
                 border: 1px solid #eee; 
                 border-radius: 7px;
+                font-size: 13px;
             }
         }
     }

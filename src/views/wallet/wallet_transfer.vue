@@ -10,7 +10,7 @@
 
         <div class="amount">
             <p class="amount-top">
-                <span>{{walletInfo.walletType || walletInfo.tokenSymbol}}</span>
+                <span>{{walletInfo.tokenSymbol || walletInfo.walletType}}</span>
                 <span style="color:#2364bc" @click="transfer.price=transferToken.totalAccount">余额 {{parseFloat(walletInfo.totalAccount)}}</span>
             </p>
             <van-field v-model="transfer.price" size="large" placeholder="请输入金额" class="price-size" />
@@ -20,44 +20,18 @@
                 <span>收款地址</span>
                 <van-icon name="column" class="book" @click="address_show=true" />
             </p>
-            <van-field v-model="transfer.address" size="large" placeholder="请输入收款地址" class="address-txt" right-icon="scan" @click-right-icon="$router.push({name:'scan'})" />
+            <van-field v-model="transfer.address" size="large" placeholder="请输入收款地址" class="address-txt" right-icon="scan" @click-right-icon="$store.state.scanData=walletInfo;$router.push({name:'scan'})" />
             <van-field v-model="transfer.remark" label="备注" placeholder="(选填)" label-width="35px" />
         </div>
         <div class="minersFee-box">
             <span>矿工费</span>
-            <span @click="$router.push('set_minerFee')"> {{ formatNum(etherValue) }} ether ≈ ￥{{turnCNY(etherValue).toFixed(2) }}
+            <span @click="$router.push('set_minerFee')"> {{ formatNum(etherValue) }} {{ walletInfo.walletType }} ≈ ￥{{turnCNY(etherValue).toFixed(2) }}
                 <van-icon :name="!is_seeFee?'arrow':'arrow-down'" />
             </span>
             
         </div>
         <van-button  v-if="showBtn" type="primary" :disabled="!transfer.price || !transfer.address" class="nextBtn" @click="transfer_next()">下一步</van-button>
         
-        <!-- <div class="set-fee " v-show="is_seeFee">
-            <div class="fee-box " :class="{'animate':senior_checked}">
-                <div class="change-fee ">
-                    <p class="gwei"> {{transfer.gasPrice.toFixed(2)}} gwei</p>
-                    <div class="slider-box">
-                        <span>慢</span>
-                        <span><van-slider v-model="transfer.gasPrice" :min="1" :max="gasPriceMax" :step="0.01" class="slider" /></span>
-                        <span>快</span>
-                    </div>
-                </div>
-                <div class="change-fee2">
-                    <van-field v-model="transfer.custom_gasPrice" type="number" placeholder="自定义Gas Price" @blur="gasPriceBlur">
-                        <van-button slot="button" size="small" style="border:0;color:#949494;text-align:right" >gwei</van-button>
-                    </van-field>
-                    <van-field v-model="transfer.gas" placeholder="自定义Gas" class="van-hairline--bottom" >
-                        <van-button slot="button" size="small" style="border:0;color:#949494;text-align:right" >gas</van-button>
-                    </van-field>
-                </div>
-            </div>
-
-        </div>
-        <p class="senior" v-show="is_seeFee">
-            <span>高级模式</span>&emsp;
-            <van-switch v-model="senior_checked" class="checked" />&emsp;
-        </p> -->
-
         <!-- 切换Token -->
         <van-action-sheet v-model="isSwitchToken" title="选择Token" round>
             <div class="switch-token">
@@ -106,10 +80,10 @@
                 <div class="payInfo">
                     <span>矿工费用</span>
                     <span>{{ formatNum(etherValue) }} ether <br>
-                        <font>=Gas ({{transfer.gas}})*Gas Price({{senior_checked?transfer.custom_gasPrice:transfer.gasPrice}} gwei)</font>
+                        <font>=Gas ({{transfer.gas}})*Gas Price({{transfer.gasPrice}} gwei)</font>
                     </span>
                 </div>
-                <van-button type="info" class="nextBtn" @click="pay_show=true;$nextTick(() => {$refs['passwordBox'].focus()})">确认转账</van-button>
+                <van-button type="info" class="nextBtn" @click="pay_show=true;transfer.wallet_password = '';$nextTick(() => {$refs['passwordBox'].focus()})">确认转账</van-button>
             </div>
         </van-action-sheet>
 
@@ -145,7 +119,7 @@ export default {
             transfer:{
                 price:'',
                 gasPrice:5,
-                gas:51000,
+                gas:21000,
                 address:'',
                 custom_gasPrice:0, 
                 wallet_password:'',
@@ -162,12 +136,13 @@ export default {
             gasData:{},
             go_Back:'',
             signData:'',
-            nonce:0
+            nonce:0,
+            isMain:''
         }
     },
 
     created(){
-
+        
         // if(window.plus){
         //     this.walletInfo =  JSON.parse(plus.storage.getItem('tokenList'))
         // }else{
@@ -188,12 +163,19 @@ export default {
                 
             }else{
                 this.transfer.address = this.$route.query.qrAddress
-            }           
-            this.walletInfo = this.public_js.GetStorage('walletInfo').find(n => n.isMain)
+            }    
+            if(this.$store.state.scanData){
+                this.walletInfo = this.$store.state.scanData
+            }else{
+                this.walletInfo = this.public_js.GetStorage('walletInfo').find(n => n.isMain)              
+            }       
             this.go_Back = 'wallet'
         }else{
             this.walletInfo = JSON.parse(this.$route.query.walletInfo)
-            console.log(this.walletInfo)
+            if(this.walletInfo.isMain){
+                this.walletInfo = this.walletInfo.assetsToken[0];
+                this.isMain = 1
+            }
         }
        
         this.ethMinerInfo() //获取EHT矿工数据
@@ -238,23 +220,40 @@ export default {
     methods:{
 
         async sure_pay(){    //确认支付
-            // const password =CryptoJS.MD5(this.transfer.wallet_password).toString().toLocaleUpperCase() 
+            let walletMain = this.public_js.GetStorage('walletInfo').find(n => n.isMain)
+            var password = CryptoJS.AES.encrypt(this.transfer.wallet_password, CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.Pkcs7
+            }).ciphertext.toString();
+            
+            if(!this.transfer.wallet_password || password != walletMain.password ){
+                this.$toast('密码错误');
+                return
+            }
+            if(this.transfer.price > parseFloat(this.walletInfo.totalAccount) ){
+                this.$toast('余额不足');
+                return
+            }
+
+       
             if(this.walletInfo.walletType == 'ETH'){
                 // const provider = new providers.JsonRpcProvider("https://rinkeby.infura.io/v3/107f905703814dbd99b749a176eb9ede"); //链接服务器
                 // var wallet = new ethers.Wallet(this.walletInfo.privateKey,provider);
-                let wallet = new ethers.Wallet(this.walletInfo.privateKey)
-                let BNBbal = ethers.utils.parseUnits(this.transfer.price, 18);
+                
+                let wallet = new ethers.Wallet(walletMain.privateKey)
+                let BNBbal = ethers.utils.parseUnits(this.transfer.price, this.walletInfo.tokenDecimals);
                 
                 var signTransaction={
                     to: this.transfer.address,
                     from: this.walletInfo.address,
                     nonce: this.nonce,
-                    gasLimit: 21000,//21000步
-                    gasPrice: 1000000000, //1GWei=1000000000Wei
+                    gasLimit: this.transfer.gas || 21000,//21000步
+                    gasPrice: this.transfer.gasPrice*1000000000 || 1000000000, //1GWei=1000000000Wei
                     data: null,
                     value: BNBbal,
                     chainId: 4
                 }
+              
                 await wallet.signTransaction(signTransaction).then((res)=>{
                     console.log( '签名：', res)
                     this.signData = res
@@ -267,7 +266,7 @@ export default {
                 });
                 
                
-                console.log(signTransaction)
+                // console.log(signTransaction)
             }
             
             if(this.walletInfo.walletType == 'BTC'){
@@ -285,66 +284,51 @@ export default {
                 console.log(signature)
             }
 
-                console.log(this.signData)
+                // console.log(this.signData)
 
-
-            // let params = {
-            //     ToAddress:this.transfer.address,
-            //     Amount:this.transfer.price,
-            //     TokenId:this.transferToken.tokenId,
-            //     GasPrice:this.senior_checked?this.transfer.custom_gasPrice:this.transfer.gasPrice,
-            //     Gas:this.transfer.gas,
-            //     Data:this.transfer.remark,
-            //     WalletPassword:this.transfer.wallet_password
-            // }
             this.$toast.loading({
                 duration: 0,
                 message: '交易中...',
                 forbidClick: true,
                 loadingType: 'spinner'
             });
+
             transaction( {signedTransactionData:this.signData} ).then(res => {
                 this.$toast.clear();
                 if(res.code === 0){
-                    this.$toast.success('交易成功'); 
-                    this.$router.back() 
-                    return
+                    this.$toast('交易中');
+                    let Trading = {}
+                    if(this.walletInfo.contractProtocol&&this.walletInfo.contractProtocol=='ERC20'){
 
-
-                    let transferInfo = {
-                        timeStamp:res.data.timestamp,
-                        transactionHash:res.data.transactionHash,
-                        toAddress:this.transfer.address,
-                        tokenAddress:this.transferToken.tokenAddress,   
-                        value:this.transfer.price,
-                        fromAddress:this.walletInfo.address,
-                        confirmations:0,
-                        status:-1,
-                        gasPrice:this.senior_checked?this.transfer.custom_gasPrice:this.transfer.gasPrice
-                    }
-                   let transferListJSON = [];
-                    if(window.plus){
-                        let transferList = plus.storage.getItem("transferList");
-                        if(transferList){
-                          transferListJSON = JSON.parse(transferList)
-                          transferListJSON.push(transferInfo)
-                        }else{
-                            transferListJSON=[transferInfo]
+                        Trading = {
+                            transactionHash:res.data,
+                            tokenSymbol:this.walletInfo.tokenSymbol,
+                            contractProtocol:this.walletInfo.contractProtocol || '',
+                            valueToEth:this.transfer.price,
+                            to: this.transfer.address,
+                            from: this.walletInfo.address,
                         }
-                        plus.storage.setItem("transferList",JSON.stringify(transferListJSON));
+
                     }else{
-                        let transferList= localStorage.getItem("transferList");
-                            console.log(    '---',transferList)
-                        if(transferList){
-                          transferListJSON = JSON.parse(transferList)
-                          transferListJSON.push(transferInfo)
-                        }else{
-                            transferListJSON=[transferInfo]
+                        Trading = {
+                            transactionHash:res.data,
+                            tokenSymbol:this.walletInfo.tokenSymbol,
+                            contractProtocol:'',
+                            valueToEth:this.transfer.price,
+                            to: this.transfer.address,
+                            from: this.walletInfo.address,
                         }
-                        localStorage.setItem("transferList", JSON.stringify(transferListJSON));
-                    } 
-                    this.$router.push({path:'/wallet_detail',query:{isTransfer:true}})
-                    
+                    }
+                    let pendingData = this.public_js.GetStorage('Trading') || []
+                    pendingData.push(Trading)
+
+                    this.public_js.SetStorage('Trading',pendingData)
+                    if(this.isMain){
+                        this.$router.replace('wallet_detail')
+                        return
+                    }
+                    this.$router.go(-1)
+      
                 }else{
                     this.$toast(res.messages)
                 }
@@ -383,7 +367,7 @@ export default {
             return parseInt(num * m, 10) / m;
         },
         turnCNY(price){   //转换成CNY
-            return price * (this.gasData.priceCny || 0)
+            return price * (2482.79 || 0)
         },
         transfer_address(item){
             this.address_show = false;
@@ -409,8 +393,8 @@ export default {
             }
 
         },
-        ethMinerInfo(){    //获取矿工数据
-
+        //获取矿工数据
+        ethMinerInfo(){    
             next_nonce({address:this.walletInfo.address}).then(res => {
                 if(res.code === 0){
                     this.nonce = res.data
@@ -472,6 +456,7 @@ export default {
             padding: 0 15px;
             height: 40px;
             background: #fff;
+            font-size: 15px;
         }
         .price-size{
             font-size: 18px;
@@ -671,5 +656,10 @@ export default {
             border-radius: 7px;
         }
     }
+}
+
+/deep/.van-icon-scan:before {
+    content: "\F0AE";
+    font-size: 19px;
 }
 </style>

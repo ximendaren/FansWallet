@@ -5,8 +5,8 @@
             <div class="miner-value">
                 <span>矿工费</span>
                 <span>
-                    0.00216 ETH <br>
-                    <font class="cny">￥7.77</font>
+                     {{  parseFloat(gasPrice*gas/1000000000) }} ETH <br>
+                    <font class="cny">￥ {{ (2482.79 * parseFloat(gasPrice*gas/1000000000)).toFixed(2) }} </font>
                     
                 </span>
             </div>

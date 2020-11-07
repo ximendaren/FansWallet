@@ -3,9 +3,9 @@
         <pageheader :changeHeader="changeHeader"></pageheader>
         <div class="receivables-box" ref="imageToFile">
             <div class="bg-color">
-                <div class="token-name"> <b>{{walletInfo.walletName||walletInfo.tokenSymbol }}</b></div>
-                <div class="token-address"  v-clipboard:copy="walletInfo.address" v-clipboard:success.stop="onCopy">
-                    <p>{{walletInfo.address}}
+                <div class="token-name"> <b>{{walletInfo.tokenSymbol||walletInfo.walletType }}</b></div>
+                <div class="token-address"  v-clipboard:copy="walletInfo.contractAddress || walletInfo.address" v-clipboard:success.stop="onCopy">
+                    <p>{{walletInfo.contractAddress || walletInfo.address}}
                         <span v-if="!share_show"><img src="@/assets/images/other/copy_black.png" alt=""></span>
                         </p>&nbsp;
                     <!-- <div class="copy_img">
@@ -20,7 +20,7 @@
                 </div>
                 <div id="qrcode" class="qrcode" ref="qrCodeUrl" :style="{'margin-top':qrcodeHeight}"></div>
                 <div class="qr-price" v-if="isPrice">
-                    扫二维码，转入 {{collection_price}} {{walletInfo.walletName||walletInfo.tokenSymbol }}
+                    扫二维码，转入 {{collection_price}} {{walletInfo.tokenSymbol||walletInfo.walletType }}
                     <span @click="clear_price()">&emsp;<van-icon name="close" /></span>
                 </div>
             </div>
@@ -45,7 +45,7 @@
 
         <div class="t-footer">
             <!-- <van-button type="info" class="footer-btn" style="background:#07c160" @click="screenShot">分享</van-button> -->
-            <van-button type="info" class="footer-btn" style="background:#07c160" v-clipboard:copy="walletInfo.address" v-clipboard:success.stop="onCopy">复制</van-button>
+            <van-button type="info" class="footer-btn" style="background:#07c160" v-clipboard:copy="walletInfo.contractAddress ||walletInfo.address" v-clipboard:success.stop="onCopy">复制</van-button>
             <van-button type="info" class="footer-btn" @click="setPrice_show=true;setCollectionPrice=''">设置金额</van-button>
         </div>
 
@@ -171,7 +171,7 @@ export default {
     mounted(){
 
         this.qrcodeHeight = (this.$refs.content.offsetHeight - this.$refs.qrCodeUrl.offsetHeight) /2 +'px'
-        this.creatQrCode(this.walletInfo.address) 
+        this.creatQrCode(this.walletInfo.contractAddress||this.walletInfo.address) 
         // }else{
         //     var collectionInfo = {
         //         tokenSymbol:this.walletInfo.tokenSymbol,
@@ -328,13 +328,13 @@ export default {
                 var collectionInfo = {
                     tokenSymbol:this.walletInfo.walletCurrencyModels[this.activeToken].tokenSymbol,
                     price:this.collection_price,
-                    address:this.walletInfo.address
+                    address:this.walletInfo.contractAddress|| this.walletInfo.address
                 }
             }else{
                 var collectionInfo = {
                     tokenSymbol:this.walletInfo.tokenSymbol,
                     price:this.collection_price,
-                    address:this.walletInfo.address
+                    address:this.walletInfo.contractAddress|| this.walletInfo.address
                 }
             }
 
@@ -352,12 +352,12 @@ export default {
             this.activeToken = 0;
             this.isPrice = false
             if(this.walletInfo.walletCurrencyModels){
-                this.creatQrCode(this.walletInfo.address)
+                this.creatQrCode(this.walletInfo.contractAddress|| this.walletInfo.address)
             }else{
                 var collectionInfo = {
                     tokenSymbol:this.walletInfo.tokenSymbol,
                     price:0,
-                    address:this.walletInfo.address
+                    address:this.walletInfo.contractAddress|| this.walletInfo.address
                 }
                 this.creatQrCode(JSON.stringify(collectionInfo))
             }

@@ -11,6 +11,7 @@
     <van-cell title="反馈&意见" is-link center @click="feedbackClick" />
     <van-cell title="清理缓存" is-link center :value="Cache" @click="clearCache" />
     <van-cell title="关于我们" is-link center @click="lookaboutus" />
+    <van-cell title="访问官网" is-link center @click="goWeb()" />
  
     <van-cell title="指纹解锁"  center>
       <van-switch v-model="fingerprint" size="22px" @change="fingerprint_change()" />  
@@ -27,7 +28,6 @@ export default {
   components:{pageheader, fingerprint},
   data() {
     return {
-      val: "",
       Cache: "",
       isCoinMakingHelp:true,
       fingerprint_show:false,
@@ -39,6 +39,13 @@ export default {
 
   },
   methods: {
+    goWeb(){
+      let query = {
+          dappName:'chainfans',
+          dappUrl:'https://www.chainfans.io'
+      }
+      this.$router.push({ path:'/thirdParty',query:{ data:JSON.stringify(query)} })
+    },
     fingerprint_change(){
       if(window.plus){
         // 检查是否支持指纹识别

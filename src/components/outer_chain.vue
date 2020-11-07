@@ -43,10 +43,10 @@ export default {
 <style scoped lang="scss">
 .container-outerChain{
     .iframe{
-        height: calc(110vh ) ;
+        height: calc(100vh - 40px ) ;
     }
     .header{
-        height: 50px;
+        height: 40px;
         display: flex;
         align-items: center;
         font-size: 18px;

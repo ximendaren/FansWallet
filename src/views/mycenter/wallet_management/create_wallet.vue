@@ -222,7 +222,15 @@ export default {
             this.backups_show = true;
             this.tips_show = true;
         },
-        finish_sureMnemonicWord(){  
+        async finish_sureMnemonicWord(){  
+            this.$toast.loading({
+                duration: 0,       // 持续展示 toast
+                forbidClick: true, // 禁用背景点击
+                loadingType: 'spinner',
+                message: '加载中'
+            });  
+
+
             var password = CryptoJS.AES.encrypt(this.formData.password, CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
                 mode: CryptoJS.mode.ECB,
                 padding: CryptoJS.pad.Pkcs7
@@ -233,19 +241,41 @@ export default {
             });
             
 
+
+
+
             let walletInfo = this.public_js.GetStorage('walletInfo');
             let assetsToken;
+            let keystore;
             if(this.$route.query.wallet == 'ETH'){
                 var ethers = require('ethers'); 
                 // var privateKey = ethers.utils.randomBytes(16);
                 // this.mnemonic  =  bip39.entropyToMnemonic(privateKey)
                 var wallet= ethers.Wallet.fromMnemonic(this.mnemonic);
+
+                var wk = new ethers.Wallet(wallet.privateKey);
+                this.$toast.loading({
+                    duration: 0, // 持续展示 toast
+                    forbidClick: true,
+                    loadingType: 'spinner',
+                    message: '创建中...',
+                });
+                await wk.encrypt(this.formData.password,percent=>{}).then(res => {
+                    keystore = res
+                    this.$toast.clear();
+                }).catch(err => {
+                    this.$toast('创建失败')
+                    this.$toast.clear();
+                })
+
+
                 this.createdWallet('ETH',wallet.address)
                 assetsToken = [{
                     address:wallet.address,
                     walletType:'ETH',
                     totalAccount:0,
                     totalUsd:0,
+                    tokenSymbol:'ETH',
                 }]
                 let newWallet = {
                     address: wallet.address,
@@ -259,7 +289,8 @@ export default {
                     walletName: this.formData.name,
                     walletType:this.$route.query.wallet,
                     remark:this.formData.tips,
-                    assetsToken:assetsToken
+                    assetsToken:assetsToken,
+                    keystore:keystore
                 }
                 walletInfo.push(newWallet)
                 this.public_js.SetStorage('walletInfo',walletInfo);
@@ -279,9 +310,19 @@ export default {
                 // console.log(2,btcWallet.publicKey)
                     assetsToken = [{
                         address:btcWallet.address,
+                        tokenLogo:'',
                         walletType:'BTC',
+                        tokenSymbol:'BTC',
                         totalAccount:0,
                         totalUsd:0,
+                    },
+                    {
+                        address:btcWallet.address,
+                        walletType:'BTC',
+                        tokenSymbol:'USDT',
+                        totalAccount:0,
+                        totalUsd:0,
+                        contractAddress:''
                     }]
                     walletInfo.push({
                         userName:'',
@@ -301,7 +342,7 @@ export default {
                 });
             }
 
-
+            this.$toast.clear();
 
             const timer = setInterval(() => {   
                 clearInterval(timer);

@@ -1,7 +1,7 @@
 <template>
   <div class="chainworld">
     <div class="navBg"></div>
-    <van-tabs v-model="world_active" class="reset" :style="{top:parseInt($store.state.appTop)+10+'px'}" type="card" sticky color="#2364bc">
+    <van-tabs v-model="world_active" class="reset" :style="{top:parseInt($store.state.appTop)+'px'}" sticky color="#2364bc">
       <van-tab title="行情">
         <!-- <van-tabs v-model="quotation_active" @click="quotationActive()"  color="#2364bc"> -->
           <!-- <van-tab title="关注">
@@ -19,7 +19,7 @@
           >  
             <div class="quotation">
               <div class="q-box"></div>
-              <div class="q-title" :style="{ top:parseInt($store.state.appTop)+40 +'px' }">
+              <div class="q-title" :style="{ top:parseInt($store.state.appTop)+44 +'px' }">
                 <span>币种</span>
                 <span>最新价</span>
                 <span>24H涨幅</span>

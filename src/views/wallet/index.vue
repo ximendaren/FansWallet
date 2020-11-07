@@ -9,7 +9,7 @@
         <div class="header" ref="header" :style="{'padding-top':$store.state.appTop}">
             <van-icon name="balance-pay" class="header-ico" @click="$router.push({path:'walletmanage',query:{switch:1}})" />
             <span>钱包</span>
-            <van-icon name="scan" class="header-ico" @click="$router.push({name:'scan'})" />
+            <van-icon name="scan" class="header-ico" @click="$store.state.scanData='';$router.push({name:'scan'})" />
         </div>
         
         <van-pull-refresh v-model="isLoading" @refresh="walletData()" :disabled="scrollTop>0">
@@ -29,10 +29,10 @@
                     </div>
                     <div class="info-right">
                         <p class="more"><van-icon name="ellipsis" @click="walletDetail" /></p>
-                        <p v-if="isHideAmount" class="wallet-price"><b> {{parseFloat(totalAmount)}}</b></p>
-                        <p v-else class="wallet-price"><b>∗∗∗∗</b></p>
-                        <p v-if="isHideAmount" class="conversion-price">≈￥{{parseFloat(totalPriceCny)}} </p>
-                        <p v-else class="conversion-price">≈￥<span class="hide-p">∗∗∗∗</span></p>
+                        <!-- <p v-if="isHideAmount" class="wallet-price"><b> {{parseFloat(totalAmount)}}</b></p>
+                        <p v-else class="wallet-price"><b>∗∗∗∗</b></p> -->
+                        <p v-if="isHideAmount" class="wallet-price">￥{{parseFloat(totalPriceCny).toFixed(2)}} </p>
+                        <p v-else class="wallet-price">￥<span class="hide-p">∗∗∗∗</span></p>
                     </div>    
                 </div>
                 <div class="operation">
@@ -42,7 +42,7 @@
             </div>
             <p class="assets van-hairline--bottom">
                 <span><b>资产</b></span>
-                <van-icon name="add-o" class="add-ico" @click="$router.push({path:'/add_assets',query:{walletType:walletInfo.walletType,address:walletInfo.address}})" />
+                <van-icon v-if="walletInfo.walletType === 'ETH'" name="add-o" class="add-ico" @click="$router.push({path:'/add_assets',query:{walletType:walletInfo.walletType,address:walletInfo.address}})" />
             </p>
 
             <div class="token-list" @scroll="scroll">
@@ -53,7 +53,7 @@
                                 <div class="left-logo"> 
                                     <div class="left-img">
                                         <img v-if="item.tokenLogo" :src='item.tokenLogo'>
-                                        <img v-else :src='require("@/assets/images/token_logo/"+item.walletType+ ".png")'>
+                                        <img v-else :src='require("@/assets/images/token_logo/"+item.tokenSymbol+ ".png")'>
                                     </div>
                                     <span><b>{{item.tokenSymbol}}</b></span>
                                 </div>
@@ -119,8 +119,9 @@
 </template>
 <script>
 import QRCode from "qrcodejs2";
-import {get_walletData, set_default, set_walletTokens} from '@/api/mycenter/wallet'
+import {get_walletData, set_default, set_walletTokens, get_chainInfo} from '@/api/mycenter/wallet'
 import { log } from 'util';
+// import { setInterval } from 'timers';
 export default {
     name:'wallet',
     data() {
@@ -137,6 +138,8 @@ export default {
             isForce:false,   //是否强制更新
             totalAmount:0,
             totalPriceCny:0,
+            timer:null,
+            tokenTimer:null
         }
     },
     // beforeRouteEnter (to, from, next) {
@@ -149,7 +152,17 @@ export default {
     // },
     created(){
         this.isUpdate()
-        
+        this.walletInfo = this.public_js.GetStorage('walletInfo').find(n=> n.isMain ==1);
+        this.walletData()
+        this.timer = setInterval(() => {
+            this.walletData()
+        },5000)
+
+        // this.chainInfo()
+        // this.timer = setInterval(() => {
+        //     this.chainInfo()
+        // },10000)
+
         if(window.plus && plus.networkinfo.getCurrentType() == 1){
             this.$store.state.networkStatus = false
         }
@@ -159,16 +172,31 @@ export default {
         }
 
     },
-    activated() {  
-        this.walletInfo = this.public_js.GetStorage('walletInfo');
-        this.walletInfo = this.walletInfo.find(n=> n.isMain ==1)
-        console.log(this.walletInfo)
-        this.walletData()
+    // activated() {  
+    //     this.walletInfo = this.public_js.GetStorage('walletInfo').find(n=> n.isMain ==1);
+
+    // },
+    beforeDestroy(){
+        clearInterval(this.timer)
+        this.timer = null
     },
     mounted(){
         this.$refs.bgBox.style.height = window.screen.height- this.$refs.header.clientHeight-50-parseInt(this.$store.state.appTop)+'px'
     },
     methods:{
+        chainInfo(){
+            clearInterval(this.timer)
+            get_chainInfo({ChainCode:this.walletInfo.walletType}).then(res => {
+                if (res.code === 0) {
+                    this.$store.commit('blockNumber',res.data.lastBlockNumber)
+                } else {
+                    this.$toast(res.data.messages);
+                }
+            })
+            .catch(err => {
+                this.$toast("网络异常");
+            });
+        },
         scroll(event){
             this.scrollTop = event.target.scrollTop
         },
@@ -212,28 +240,40 @@ export default {
                     this.isLoading = false
                 },1000)
                 if(res.code === 0){
-                    let walletData = this.public_js.GetStorage('walletInfo');
-                    let i = walletData.findIndex(n => n.isMain === 1)
-                    walletData[i].assetsToken.forEach(item => {
+                    // this.walletInfo = this.public_js.GetStorage('walletInfo');
+                    // let i = walletData.findIndex(n => n.isMain === 1)
+                    this.walletInfo.assetsToken.forEach(item => {
                         res.data.forEach(item2 => {
                             if(item.tokenSymbol == item2.tokenSymbol){
-                                item.totalAccount = item2.amount
-                                item.totalUsd = item2.tokenPriceCny * item2.amount
+                                item.address = item2.address
+                                item.tokenDecimals = item2.tokenDecimals
+                                item.totalAccount = item2.amountToEth
+                                item.totalUsd = item2.tokenPriceCny * item2.amountToEth
+                                item.contractAddress = item2.contractAddress?item2.contractAddress:''
+
                             }
                         })
                     })
+                    // this.walletInfo[i] = JSON.parse(JSON.stringify(this.walletInfo[i]))
+
+                    this.totalAmount = 0;
+                    this.totalPriceCny = 0;
                     res.data.forEach(item => {
-                        this.totalAmount += item.amount
-                        this.totalPriceCny += item.amount * item.tokenPriceCny
+                        this.totalAmount += item.amountToEth
+                        this.totalPriceCny += item.amountToEth * item.tokenPriceCny
                     })
 
-                    this.public_js.SetStorage('walletInfo',walletData);
+                    let data = this.public_js.GetStorage('walletInfo');  
+                    let i = data.findIndex(n => n.isMain === 1);
+                    data[i] = this.walletInfo
+
+                    this.public_js.SetStorage('walletInfo',data);
                     
                 }else{
                     this.$toast(res.messages)
                 }
             }).catch(err => {
-                this.$toast('网络异常')
+                // this.$toast('网络异常')
                 this.isLoading = false
             })
         },
@@ -342,7 +382,7 @@ export default {
     align-items: center;
     height: 46px;
     padding: 0 10px;
-    font-size: 22px;
+    font-size: 24px;
     span{
         font-size: 18px;
     }

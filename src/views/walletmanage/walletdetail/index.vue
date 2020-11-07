@@ -13,13 +13,14 @@
 
     <div class="sethelp">
       <van-cell size="large" icon="records" title="描述"  :value="walletInfo.remark" value-class="describe" center  @click="tipClick" />
-      <van-cell size="large" icon="description" title="导出助记词" is-link center @click="exportwords('助记词')" />
-      <van-cell size="large" icon="peer-pay" title="导出 Keystore" is-link center @click="exportwords('Keystore')" />
-      <van-cell size="large" icon="share-o" title="导出私钥" is-link center @click="exportwords('私钥')" />
+      <van-cell size="large" v-if="walletInfo.mnemonic" icon="description" title="导出助记词" is-link center @click="exportwords('助记词')" />
+      <van-cell size="large" v-if="walletInfo.walletType != 'BTC'" icon="peer-pay" title="导出 Keystore" is-link center @click="exportwords('Keystore')" />
+      <van-cell size="large" v-if="walletInfo.walletType != 'BTC'" icon="share-o" title="导出私钥" is-link center @click="exportwords('私钥')" />
       <!-- <van-cell size="large" icon="cash-on-deliver" title="免密支付" is-link center @click="$router.push('freePayment')" /> -->
       <!-- <van-cell size="large" icon="edit" title="修改钱包密码" is-link center @click="$router.push({path:'/walletPassword',query:{walletId:walletInfo.walletId}})   " /> -->
     </div>
-    <div class="del-wallet" v-if="show_del" @click="exportwords('del')"><b>删除钱包</b></div>
+    <div class="del-wallet" @click="exportwords('del')"><b>删除钱包</b></div>
+    <!-- <div class="del-wallet" v-if="show_del" @click="exportwords('del')"><b>删除钱包</b></div> -->
 
     <!-- 修改钱包名称 -->
     <van-dialog
@@ -86,7 +87,7 @@ export default {
   },
   created() {
     this.walletInfo = JSON.parse(this.$route.query.data)    
-    // this.walletLogo_active = this.walletInfo.headPortrait
+    // console.log( this.walletInfo)
     if(this.walletInfo.isMain == 1){
       this.show_del = false
     }
@@ -141,7 +142,7 @@ export default {
     tipClick(){
       this.$dialog.alert({
         title: '描述信息',
-        message: this.walletInfo.remark,
+        message: this.walletInfo.remark || '未填写描述信息',
         messageAlign:'left',
         // showCancelButton:true,
         // showConfirmButton:false
@@ -158,7 +159,6 @@ export default {
           padding: CryptoJS.pad.Pkcs7
       });
       var decryptedStr = decryptedData.toString(CryptoJS.enc.Utf8);
-
       if(decryptedStr !== this.password ){
         this.$toast('密码错误')
         this.password = ''

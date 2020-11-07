@@ -44,7 +44,7 @@
 </template>
 <script>
 import pageheader from '@/components/pageheader'
-import {get_hotList, get_searchToken, set_walletTokens, get_walletData} from '@/api/mycenter/wallet'
+import {get_hotList, get_searchToken, set_walletTokens, get_walletData, add_token} from '@/api/mycenter/wallet'
 import { stringify } from 'querystring'
 export default {
     components:{pageheader},
@@ -65,29 +65,43 @@ export default {
         //     let index = walletInfo.findIndex(n => n.address === this.$route.query.address)
         //     return walletInfo[index].assetsToken.slice(1).some(n => n.tokenId === tokenId)
         // },
-        add_assets(item,isAdd){
+        add_assets(item,isAdd){  
             if(!item.isAdd){
-                item.isAdd = 1
-                this.hotToken = JSON.parse(JSON.stringify(this.hotToken))
-                this.checkToken = JSON.parse(JSON.stringify(this.checkToken))
-                let walletInfo = this.public_js.GetStorage('walletInfo')
-                let index = walletInfo.findIndex(n => n.address === this.$route.query.address)
-                walletInfo[index].assetsToken.push({
-                    tokenSymbol:item.tokenSymbol,
-                    tokenName:item.tokenName,
-                    address:item.contractAddress,
-                    totalAccount:0,
-                    totalUsd:0,
-                    walletType:item.tokenType,
-                    tokenLogo:item.tokenLogo,
-                    contractProtocol:item.contractProtocol,
-                    tokenId:item.tokenId
+
+                let params = {
+                    ChainCode:item.chainCode,
+                    Address:this.$route.query.address,
+                    ContractAddress:item.contractAddress, 
+                }
+                add_token(params).then(res => {
+                    if(res.code === 0){
+                        item.isAdd = 1
+                        this.hotToken = JSON.parse(JSON.stringify(this.hotToken))
+                        this.checkToken = JSON.parse(JSON.stringify(this.checkToken))
+                        let walletInfo = this.public_js.GetStorage('walletInfo')
+                        let index = walletInfo.findIndex(n => n.address === this.$route.query.address)
+                        walletInfo[index].assetsToken.push({
+                            tokenSymbol:item.tokenSymbol,
+                            tokenName:item.tokenName,
+                            address:item.contractAddress,
+                            totalAccount:0,
+                            totalUsd:0,
+                            walletType:item.tokenType,
+                            tokenLogo:item.tokenLogo,
+                            contractProtocol:item.contractProtocol,
+                            tokenId:item.tokenId,
+                            walletType:item.chainCode
+                        })
+                        this.public_js.SetStorage('walletInfo',walletInfo)
+                        this.$toast('添加资产成功')
+
+                    }else{
+                        this.$toast(res.messages)
+                    }
+                }).catch(err => {
+                    this.$toast('网络异常')
                 })
-                this.public_js.SetStorage('walletInfo',walletInfo)
-                
-                
-                console.log(this.hotToken)
-                this.$toast('添加资产成功')
+
             }
         },
         hot_list(type){

@@ -22,9 +22,9 @@
               <p class="prompt-func__desc">建议使用密码管理工具管理</p>
             </div>
           </div>
-          <div class="PrivateKey-key"> {{wallet_data.keyStore||wallet_data.privateKey}} </div>
+          <div class="PrivateKey-key"> {{importData}} </div>
 
-          <div class="keyStorePassword" v-if="wallet_data.keyStorePassword">
+          <!-- <div class="keyStorePassword" v-if="wallet_data.keyStorePassword">
             <span>keyStore密码</span>
             <span             
               v-clipboard:copy="wallet_data.keyStorePassword"
@@ -32,12 +32,12 @@
               v-clipboard:error="onError"> 
               {{wallet_data.keyStorePassword}} 
             </span>
-          </div>
+          </div> -->
 
           <van-button
             type="info"
             class="btn"
-            v-clipboard:copy="wallet_data.keyStore||wallet_data.privateKey"
+            v-clipboard:copy="importData"
             v-clipboard:success="onCopy"
             v-clipboard:error="onError"
           >复制 {{exportType=='Keystore'?'Keystore':'Private Key'}}</van-button>
@@ -71,6 +71,7 @@
 <script>
 
 import QRCode from "qrcodejs2";
+import { ethers } from 'ethers';
 export default {
   data() {
     return {
@@ -80,6 +81,7 @@ export default {
       exportType:'',
       wallet_data:{},
       isCreatQrCode:true,
+      importData:''
     };
   },
   watch:{
@@ -97,8 +99,19 @@ export default {
   },
   created() {
     this.exportType = this.$route.query.tag
-    this.wallet_data = this.$store.state.wallet_data
-  },
+    console.log(this.$store.state.wallet_data)
+    if(this.exportType === 'Keystore'){
+      this.importData = this.$store.state.wallet_data.keystore
+    }else{
+      this.importData = this.$store.state.wallet_data.privateKey
+    }
+
+    // var wallet =new ethers.Wallet(this.wallet_data.privateKey);
+    //  wallet.encrypt('chen911918',percent=>{}).then(res => {
+    //    console.log(res)
+
+    //  })
+    },
   methods: {
     onCopy(e) {
       this.$toast("复制成功");
@@ -108,7 +121,7 @@ export default {
     },
     creatQrCode() {
       const qrcode = new QRCode(this.$refs.CodeUrl, {
-        text: this.wallet_data.keyStore||this.wallet_data.privateKey,
+        text: this.importData,
         width:220,
         height:220,
         colorDark: "#000000",

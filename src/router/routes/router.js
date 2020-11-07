@@ -32,7 +32,7 @@ const routes = [
       {
         path: 'wallet',
         name: 'wallet',
-        meta:{keepAlive: true},
+        // meta:{keepAlive: true},
         component: () => import('@/views/wallet/index'),
       },
       // {
@@ -55,6 +55,12 @@ const routes = [
     name: 'thirdParty',
     meta: { headline: '' },   //第三方dapp
     component: () => import('@/views/navigation/third-dapp')
+  },
+  {
+    path: '/webView',
+    name: 'webView',
+    meta: { headline: '' },   //webView
+    component: () => import('@/views/navigation/webView')
   },
   {
     path: '/outer_chain',
@@ -174,7 +180,8 @@ const routes = [
   {
     path: '/wallet_detail',
     name: 'wallet_detail',
-    meta:{keepAlive: true},
+    // meta:{keepAlive: true},
+    meta: { headline: '交易纪录' },
     component: () => import('@/views/wallet/wallet_detail')
   },
   {

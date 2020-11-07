@@ -1,15 +1,19 @@
 <template>
     <div class="third-party">
         <div class="header" ref="header" :style="{'padding-top':$store.state.appTop }">
-            <div class="title" :style="{'padding-top':$store.state.appTop }"> {{title}} </div>
+            <div class="title" :style="{'padding-top':$store.state.appTop }"
+            v-clipboard:copy="title" v-clipboard:success.stop="onCopy"> {{title.slice(0,24)}}... </div>
             <div class="operation">
-                <van-icon class="icon" name="ellipsis" @click="operation"  />
+                <van-icon class="icon" v-if="linkData.dappId&&isCollet" :name="require('@/assets/images/icon/collet-a.png')" @click="collectionDapp"  />
+                <van-icon class="icon" v-if="linkData.dappId&&!isCollet" :name="require('@/assets/images/icon/collet.png')" @click="collectionDapp"  />
+                <van-icon class="icon" v-if="!linkData.dappId" :name="require('@/assets/images/icon/refresh.png')" @click="$router.go(0)"  />
                 <van-icon class="icon" name="close" @click="$router.back()" />
             </div>
         </div>
         <!-- <iframe :src="linkData.dappUrl.includes('http')?linkData.dappUrl:''" width="100%" frameborder="0" scrolling="auto" class="iframe" ></iframe> -->
+        <!-- <iframe src="#/webView" width="100%" frameborder="0" scrolling="auto" class="iframe" ></iframe> -->
 
-        <van-action-sheet v-model="operation_show" cancel-text="取消" close-on-click-action>
+        <!-- <van-action-sheet v-model="operation_show" cancel-text="取消" close-on-click-action>
             <div class="tool-content">
                 <div class="module" v-clipboard:copy="linkData.dappUrl" v-clipboard:success.stop="copyUrl">
                     <img src="@/assets/images/icon/link.png" alt="">
@@ -25,7 +29,7 @@
                     <p>{{isCollet?'取消收藏':'收藏'}}</p>
                 </div>
             </div>
-        </van-action-sheet>
+        </van-action-sheet> -->
 
     </div>
 </template>
@@ -41,14 +45,15 @@ export default {
         }
     },
     mounted(){
-        this.linkData = JSON.parse(this.$route.query.data)
-        this.title = this.linkData.dappName
+        this.linkData = JSON.parse(this.$route.query.data);console.log(this.linkData)
+        this.title = this.linkData.dappUrl
+        this.bookmark = this.public_js.GetStorage('bookmark') || []
         plus.webview.open(this.linkData.dappUrl,'window',{top:this.$refs.header.clientHeight+'px',bottom:0,zindex:0,
             progress:{
 				color:'#2364bc'
             } 
         }); 
-        this.bookmark = this.public_js.GetStorage('bookmark') || []
+        
     },
     beforeDestroy(){
         plus.webview.close( 'window' );
@@ -59,22 +64,24 @@ export default {
         }
     },
     methods:{
+        onCopy(e) {
+            plus.nativeUI.toast('已复制链接');
+        },
         operation(){
             this.operation_show=true;
-            // plus.webview.hide('window')
         },
-        copyUrl(e){
-            this.$toast('复制成功');
-            this.operation_show = false
-        },
-        collectionDapp(){
+        // copyUrl(e){
+        //     this.$toast('复制成功');
+        //     this.operation_show = false
+        // },
+        collectionDapp(){  console.log(this.bookmark)
             // plus.webview.show('window')
             if(this.isCollet){
                 let index = this.bookmark.findIndex(n => n.dappId === this.linkData.dappId);
                 this.bookmark.splice(index,1)
-                this.$toast('已取消收藏')
+                plus.nativeUI.toast('已取消收藏');
             }else{
-                this.$toast('已收藏')
+                plus.nativeUI.toast('已收藏');
                 this.bookmark.push(this.linkData)
             }
             this.public_js.SetStorage('bookmark',this.bookmark)
@@ -86,7 +93,6 @@ export default {
 
 <style lang="scss" scoped>
 .third-party{
-
     .header{
         height: 46px;
         background: #eee;
@@ -101,7 +107,7 @@ export default {
             left: 50%;
             transform: translate(-50%);
             line-height: 46px;
-            font-size: 16px;
+            font-size: 13px;
         }
         .operation{
             width: 80px;

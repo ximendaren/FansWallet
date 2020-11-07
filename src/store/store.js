@@ -22,16 +22,8 @@ export default new Vuex.Store({
     minerData:'',
     isGuide:window.plus?!plus.storage.getItem("isGuide")?1:plus.storage.getItem("isGuide"):!localStorage.getItem("isGuide")?1:localStorage.getItem("isGuide"),
     appTop:0,
-    optionsData:[  
-      {id:0,text:"基本功能",state:true,oldPrice:1,price:1,category:1,see:true},
-      {id:1,text:"销毁",state:false,oldPrice:1,price:1,category:1,see:false},
-      {id:2,text:"合并",state:false,oldPrice:2,price:1.5,category:1,see:false},
-      {id:3,text:"锁定",state:false,oldPrice:1,price:1,category:0,see:false},
-      {id:4,text:"锁仓",state:false,oldPrice:2,price:2,category:0,see:false},
-      {id:5,text:"增发",state:false,oldPrice:2,price:1.5,category:0,see:false},
-      {id:6,text:"空投",state:false,oldPrice:1,price:1,category:1,see:false},
-      {id:7,text:"直投",state:false,oldPrice:1,price:1,category:0,see:false}
-    ],
+    lastBlockNumber:0,
+    scanData:''
   },
   mutations: {
     changeRoute(state,newVal){
@@ -48,6 +40,9 @@ export default new Vuex.Store({
     },
     walletInfo(state,newVal){
       state.walletInfo=newVal
+    },
+    blockNumber(state,newVal){
+      state.lastBlockNumber=newVal
     },
     userName(state,newVal){
       state.userName=newVal

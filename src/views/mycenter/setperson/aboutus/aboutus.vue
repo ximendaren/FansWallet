@@ -3,11 +3,11 @@
     <Pageheader />
     <div class="aboustus-img">
       <img src="../../../../assets/images/my_center/logo.png" />
-      <p class="aboustus-title">{{appname}}</p>
+      <p class="aboustus-title">迷链钱包</p>
       <p class="aboustus-version">Version-{{version}}</p>
     </div>
     <div class="setfunction">
-      <van-cell title="公司简介" :value="name" is-link center @click="profileClick" />
+      <van-cell title="公司名称" :value="name" />
       <van-cell title="版本日志" is-link center @click="logClick" />
       <van-cell is-link @click="lookupdate" :value="newVersionData.versionNo">
         <template slot="title">

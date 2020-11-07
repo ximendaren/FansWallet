@@ -105,7 +105,7 @@ export default {
             if(this.tokenResult.includes('ETH')){ 
                 this.createdWallet('ETH',wallet.address)
                 assetsToken = [{
-                    contractAddress:wallet.address,
+                    address:wallet.address,
                     tokenLogo:'',
                     walletType:'ETH',
                     tokenSymbol:'ETH',
@@ -146,10 +146,18 @@ export default {
 
                 // this.createdWallet('BTC',btcWallet.address)
                     assetsToken = [{
-                        contractAddress:btcWallet.address,
+                        address:btcWallet.address,
                         tokenLogo:'',
                         walletType:'BTC',
                         tokenSymbol:'BTC',
+                        totalAccount:0,
+                        totalUsd:0,
+                    },
+                    {
+                        contractAddress:'',
+                        tokenLogo:'',
+                        walletType:'BTC',
+                        tokenSymbol:'USDT',
                         totalAccount:0,
                         totalUsd:0,
                     }]
