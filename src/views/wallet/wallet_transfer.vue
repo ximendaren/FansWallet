@@ -25,7 +25,7 @@
         </div>
         <div class="minersFee-box">
             <span>矿工费</span>
-            <span @click="$router.push('set_minerFee')"> {{ formatNum(etherValue) }} {{ walletInfo.walletType }} ≈ ￥{{turnCNY(etherValue).toFixed(2) }}
+            <span @click="$router.push({path:'/set_minerFee',query:{gas:transfer.gas}})"> {{ formatNum(etherValue) }} {{ walletInfo.walletType }} ≈ ￥{{turnCNY(etherValue).toFixed(2) }}
                 <van-icon :name="!is_seeFee?'arrow':'arrow-down'" />
             </span>
             
@@ -177,7 +177,7 @@ export default {
                 this.isMain = 1
             }
         }
-       
+
         this.ethMinerInfo() //获取EHT矿工数据
     },
     mounted(){
@@ -188,6 +188,8 @@ export default {
                 this.showBtn = true
             }
         }
+        console.log(this.walletInfo)
+
     },
     beforeDestroy(){
         if(this.go_Back){
@@ -199,6 +201,7 @@ export default {
             if(state){
                 this.transfer.custom_gasPrice = Number( this.transfer.gasPrice.toFixed(2) )
             }else{
+
                 this.transfer.gasPrice = Number(this.transfer.custom_gasPrice)
             }
         },
@@ -237,23 +240,43 @@ export default {
 
        
             if(this.walletInfo.walletType == 'ETH'){
-                // const provider = new providers.JsonRpcProvider("https://rinkeby.infura.io/v3/107f905703814dbd99b749a176eb9ede"); //链接服务器
-                // var wallet = new ethers.Wallet(this.walletInfo.privateKey,provider);
-                
-                let wallet = new ethers.Wallet(walletMain.privateKey)
+                let wallet = new ethers.Wallet(walletMain.privateKey);
                 let BNBbal = ethers.utils.parseUnits(this.transfer.price, this.walletInfo.tokenDecimals);
-                
-                var signTransaction={
-                    to: this.transfer.address,
-                    from: this.walletInfo.address,
-                    nonce: this.nonce,
-                    gasLimit: this.transfer.gas || 21000,//21000步
-                    gasPrice: this.transfer.gasPrice*1000000000 || 1000000000, //1GWei=1000000000Wei
-                    data: null,
-                    value: BNBbal,
-                    chainId: 4
+                var signTransaction;
+                if(this.walletInfo.contractProtocol&&this.walletInfo.contractProtocol=="ERC20"){   //eth转账
+                    const abi = [
+                        "function balanceOf(address owner) view returns (uint256)",
+                        "function decimals() view returns (uint8)",
+                        "function symbol() view returns (string)",
+                        "function transfer(address to, uint amount) returns (boolean)",
+                        "event Transfer(address indexed from, address indexed to, uint amount)"
+                    ];
+                    var contractAddress = this.walletInfo.contractAddress;
+                    var erc20Contract=new ethers.Contract(contractAddress,abi);
+                    //非签名转账
+                    var txInfo={ gasLimit: this.transfer.gas, gasPrice: ethers.utils.parseUnits(this.transfer.gasPrice.toString(), "gwei")}
+                    await erc20Contract.populateTransaction.transfer(this.transfer.address,BNBbal,txInfo).then(res=>{
+                        console.log(res);
+                        res.nonce=this.nonce;
+                        res.chainId=this.$store.state.isVersion?1:4 ;
+                        signTransaction = res;
+                        // wallet.signTransaction(res).then(aa=>{
+                        // console.log(aa);
+                        // })
+                    });
+                }else{    //erc20转账
+                    signTransaction={
+                        to: this.transfer.address,
+                        from: this.walletInfo.address,
+                        nonce: this.nonce,
+                        gasLimit: this.transfer.gas || 21000,//21000步
+                        gasPrice: this.transfer.gasPrice*1000000000 || 1000000000, //1GWei=1000000000Wei
+                        data: null,
+                        value: BNBbal,
+                        chainId: this.$store.state.isVersion?1:4 
+                    }
                 }
-              
+
                 await wallet.signTransaction(signTransaction).then((res)=>{
                     console.log( '签名：', res)
                     this.signData = res
@@ -296,7 +319,7 @@ export default {
             transaction( {signedTransactionData:this.signData} ).then(res => {
                 this.$toast.clear();
                 if(res.code === 0){
-                    this.$toast('交易中');
+                    this.$toast('打包中');
                     let Trading = {}
                     if(this.walletInfo.contractProtocol&&this.walletInfo.contractProtocol=='ERC20'){
 
@@ -404,6 +427,13 @@ export default {
             }).catch(err => {
                 this.$toast('网络异常')
             })
+            if(this.walletInfo.walletType === 'ETH'){
+                if(this.walletInfo.contractProtocol&&this.walletInfo.contractProtocol=="ERC20"){
+                    this.transfer.gas = 60000
+                }else{
+                    this.transfer.gas = 21000
+                }
+            }
             console.log(this.$store.state.minerData)
             if(this.$store.state.minerData){
                 this.transfer.gasPrice = this.$store.state.minerData.gasPrice;

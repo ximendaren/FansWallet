@@ -6,8 +6,7 @@
                 <span>矿工费</span>
                 <span>
                      {{  parseFloat(gasPrice*gas/1000000000) }} ETH <br>
-                    <font class="cny">￥ {{ (2482.79 * parseFloat(gasPrice*gas/1000000000)).toFixed(2) }} </font>
-                    
+                    <font class="cny">￥ {{ (2482.79 * parseFloat(gasPrice*gas/1000000000)).toFixed(2) }} </font> 
                 </span>
             </div>
             <p>GasPrice( {{gasPrice || 0.00}} GWEI)*Gas( {{gas || 0}} )</p>
@@ -96,6 +95,7 @@ export default {
     created(){
         this.minerFeeData = this.public_js.GetStorage('transferCode')
         this.gasPrice = this.minerFeeData.midGasPrice
+        this.gas = this.$route.query.gas
     },
     mounted(){
         window.onresize= ()=>{

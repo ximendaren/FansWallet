@@ -93,7 +93,7 @@ export default {
   },
   created(){
     this.noticeList()
-    if(window.plus && this.$store.state.isVersion){      
+    if(window.plus){      
       this.isUpdate()
     }
   },

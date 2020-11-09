@@ -163,20 +163,24 @@ export default {
     },
     methods:{
         //交易记录
-        transferList(){
+        transferList(state){
             if(this.walletInfo.contractProtocol &&  this.walletInfo.contractProtocol == 'ERC20' ){
 
                 let params = {
                     PageCount:10,
                     GetType:'After',
-                    PagingParams:this.transactionData.length,
+                    PagingParams:state?0: this.transactionData.length,
                     Address: this.walletInfo.address,
                     ContractAddress: this.walletInfo.contractAddress,
                 }
                 get_transferList_erc20(params).then(res => {    //ERC20
                     this.isLoading =false
                     if(res.code === 0){
-                        this.transactionData = this.transactionData.concat(res.data) 
+                        if(state){
+                            this.transactionData = res.data
+                        }else{
+                            this.transactionData = this.transactionData.concat(res.data) 
+                        }
 
                         this.loading = false;
                         if (this.transactionData.length >= res.totalCount) {
@@ -228,7 +232,7 @@ export default {
                         if(res.code === 0){
                             if(res.data){
                                 this.transferData.splice(index,1)
-                                this.transferList()
+                                this.transferList('refresh')
                             }
                         }else{
                             this.$toast(res.messages)
@@ -244,7 +248,7 @@ export default {
                         if(res.code === 0){
                             if(res.data){
                                 this.transferData.splice(index,1)
-                                 this.transferList()
+                                 this.transferList('refresh')
                             }
                         }else{
                             this.$toast(res.messages)
