@@ -6,7 +6,7 @@
                 <div class="state-img">
                     <img src="@/assets/images/other/transferSuccess.png" alt="">
                 </div>
-                <p>成功</p>
+                <p> {{ transactionInfo.valueToEth==0?'合约调用':''}}成功</p>
                 <p class="transTime"> {{public_js.transformationTime(transactionInfo.timestamp*1000)}} </p>
             </div>
             <div class="cell">

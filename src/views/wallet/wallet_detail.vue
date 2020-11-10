@@ -6,7 +6,7 @@
             <div class="tokenEcharts-box" @touchstart="refresh_state = false">
                 <p>{{walletInfo.tokenSymbol||walletInfo.walletType}}</p>
                 <p> {{walletInfo.totalAccount}}</p> 
-                <p>≈ ￥{{walletInfo.totalUsd.toFixed(2) }}</p>
+                <p>≈￥{{walletInfo.totalUsd.toFixed(2) }}</p>
             </div>  
             <div class="pending-box">
                 <div class="pending-module" v-for="(item,index) in pendingData" :key="index">
@@ -37,7 +37,7 @@
                                         <span>{{ public_js.ellipsAddress(item.from.toLowerCase()==walletInfo.address.toLowerCase()?item.to:item.from,6) }}</span>
                                         <span style="color:#999">{{public_js.transformationTime(item.timestamp*1000)}}</span>
 
-                                        <span style="margin-top:5px" v-if="$store.state.lastBlockNumber&&$store.state.lastBlockNumber - item.blockNumber<12 && item.from.toLowerCase()==walletInfo.address.toLowerCase()">
+                                        <span style="margin-top:5px" v-if="item.valueToEth!=0&&$store.state.lastBlockNumber&&$store.state.lastBlockNumber - item.blockNumber<12 && item.from.toLowerCase()==walletInfo.address.toLowerCase()">
                                             <van-progress
                                             :pivot-text="$store.state.lastBlockNumber - item.blockNumber<0?'0':($store.state.lastBlockNumber - item.blockNumber).toString()"
                                             color="#2364bc"
@@ -125,7 +125,7 @@ export default {
             this.chainInfo()
         },10000)
 
-
+        console.log(this.walletInfo)
     },
     beforeDestroy(){
         clearInterval(this.transferTimer);
@@ -164,6 +164,12 @@ export default {
     methods:{
         //交易记录
         transferList(state){
+            this.$toast.loading({
+                duration: 0,
+                message: '加载中...',
+                forbidClick: true,
+                loadingType: 'spinner'
+            });
             if(this.walletInfo.contractProtocol &&  this.walletInfo.contractProtocol == 'ERC20' ){
 
                 let params = {
@@ -175,6 +181,7 @@ export default {
                 }
                 get_transferList_erc20(params).then(res => {    //ERC20
                     this.isLoading =false
+                    this.$toast.clear();    
                     if(res.code === 0){
                         if(state){
                             this.transactionData = res.data
@@ -192,18 +199,25 @@ export default {
                     }
                 }).catch(err => {
                     this.$toast('网络异常')
+                    this.$toast.clear();
                 })
             } else {
                 let params = {
                     PageCount:10,
                     GetType:'After',
-                    PagingParams:this.transactionData.length,
+                    PagingParams:state?0: this.transactionData.length,
                     Address: this.walletInfo.address
                 }
                 get_transferList(params).then(res => {     //eth
                     this.isLoading =false
+                    this.$toast.clear();
                     if(res.code === 0){
-                        this.transactionData = this.transactionData.concat(res.data) 
+                        if(state){
+                            this.transactionData = res.data
+                        }else{
+                            this.transactionData = this.transactionData.concat(res.data) 
+                        }
+
                         this.loading = false;
                         if (this.transactionData.length >= res.totalCount) {
                             this.finished = true;
@@ -213,6 +227,7 @@ export default {
                     }
                 }).catch(err => {
                     this.$toast('网络异常')
+                    this.$toast.clear();
                 })
 
             }
@@ -233,6 +248,7 @@ export default {
                             if(res.data){
                                 this.transferData.splice(index,1)
                                 this.transferList('refresh')
+
                             }
                         }else{
                             this.$toast(res.messages)

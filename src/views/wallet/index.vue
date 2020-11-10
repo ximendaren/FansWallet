@@ -46,7 +46,7 @@
             </p>
 
             <div class="token-list" @scroll="scroll">
-                <div class="token-box" v-for="(item,index) in walletInfo?walletInfo.assetsToken:''" :key="index"  @click="select_assets(item,index)">
+                <div class="token-box van-hairline--bottom" v-for="(item,index) in walletInfo?walletInfo.assetsToken:''" :key="index"  @click="select_assets(item,index)">
                     <van-swipe-cell :disabled="item.tokenProtocol=='Main'">
                         <van-cell center>
                             <template slot="title" center> 
@@ -212,10 +212,10 @@ export default {
         },
         delToken(item,index){   //删除当前资产
             let walletData = this.public_js.GetStorage('walletInfo');
-            let i = walletData.findIndex(n => n.isMain === 1)
-            walletData[i].assetsToken.splice(index,1)
+            let i = walletData.findIndex(n => n.isMain === 1);
+            walletData[i].assetsToken.splice(index,1);
             this.public_js.SetStorage('walletInfo',walletData);
-            this.walletInfo = walletData.find(n=> n.isMain ==1)
+            this.walletInfo = walletData.find(n=> n.isMain ==1);
         },
         onRefresh() {      
             this.$toast('刷新成功');

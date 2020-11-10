@@ -17,19 +17,19 @@
                 <span>预计交易时间</span>
             </p>
 
-            <div class="module" @click="speed=1;gasPrice=minerFeeData.maxGasPrice;gas=21000">  
+            <div class="module" @click="speed=1;gasPrice=minerFeeData.maxGasPrice;">  
                 <div class="m-left">
                     <div class="check">
                         <van-icon v-show="speed==1" name="success" color="#1989fa" class="icon" /> 
                     </div>
                     <div>
                         <p>最快</p>
-                        <p class="gwei"> {{minerFeeData.maxGasPrice}}  GWEI</p>                             
+                        <p class="gwei"> {{(minerFeeData.maxGasPrice)}}  GWEI</p>                             
                     </div>
                 </div>
-                <span class="minute"> &lt; {{minerFeeData.maxGasPriceTime}} s</span>
+                <span class="minute"> &lt; {{timeConve(minerFeeData.maxGasPriceTime)}} 分钟</span>
             </div>
-            <div class="module" @click="speed=2;gasPrice=minerFeeData.midGasPrice;gas=21000">
+            <div class="module" @click="speed=2;gasPrice=minerFeeData.midGasPrice;">
                 <div class="m-left">
                     <div class="check">
                         <van-icon v-show="speed==2" name="success" color="#1989fa" class="icon" /> 
@@ -39,9 +39,9 @@
                         <p class="gwei"> {{minerFeeData.midGasPrice}}  GWEI</p>                             
                     </div>
                 </div>
-                <span class="minute"> &lt; {{minerFeeData.midGasPriceTime}} s</span>
+                <span class="minute"> &lt; {{timeConve(minerFeeData.midGasPriceTime)}} 分钟</span>
             </div>
-            <div class="module" @click="speed=3;gasPrice=minerFeeData.minGasPrice;gas=21000">
+            <div class="module" @click="speed=3;gasPrice=minerFeeData.minGasPrice;">
                 <div class="m-left">
                     <div class="check">
                         <van-icon v-show="speed==3" name="success" color="#1989fa" class="icon" /> 
@@ -51,7 +51,7 @@
                         <p class="gwei"> {{minerFeeData.minGasPrice}}  GWEI</p>                             
                     </div>
                 </div>
-                <span class="minute"> &lt; {{minerFeeData.minGasPriceTime}} s</span>
+                <span class="minute"> &lt;{{timeConve(minerFeeData.minGasPriceTime)}} 分钟</span>
             </div>
 
             <!-- 自定义 -->
@@ -140,6 +140,9 @@ export default {
             }
             this.$store.state.minerData = minerData
             this.$router.back()
+        },
+        timeConve(arg){
+            return Math.round((parseInt(arg/ 60) +arg % 60 /60 ) *100 ) /100 ;
         }
     }
 }

@@ -23,7 +23,8 @@ export default new Vuex.Store({
     isGuide:window.plus?!plus.storage.getItem("isGuide")?1:plus.storage.getItem("isGuide"):!localStorage.getItem("isGuide")?1:localStorage.getItem("isGuide"),
     appTop:0,
     lastBlockNumber:0,
-    scanData:''
+    scanData:'',
+    transferKeep:''
   },
   mutations: {
     changeRoute(state,newVal){

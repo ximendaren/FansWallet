@@ -32,32 +32,18 @@ export default {
          //检测新版本      
         versionInfo(){  
             if(window.plus){
-                app_version().then(res => {    
-                    if(res.code === 0){
-                    
+                app_version().then(res => {   
+                    this.routeInit() 
+                    if(res.code === 0){             
                         plus.runtime.getProperty(plus.runtime.appid, (wgtinfo) => {
                         res.data.app_version = wgtinfo.version
                         plus.storage.setItem('version_data',  JSON.stringify(res.data)) 
-                        this.routeInit()
-     
-                        // this.$router.push({path:'/wallet'})
-            
                         });
                     }else{
-                        this.$dialog.alert({
-                            message: '无法访问网络，点击重试'
-                    
-                        }).then(() => {
-                            this.versionInfo()
-                        });
+
                     }
                 }).catch(err => {
-                    this.$dialog.alert({
-                        message: '无法访问网络，点击重试'
-                   
-                    }).then(() => {
-                        this.versionInfo()
-                    });
+                    this.routeInit()
                 })
             }
         },
@@ -67,7 +53,6 @@ export default {
 
                     let isFingerprint = plus.storage.getItem("fingerprint") ? plus.storage.getItem("fingerprint") : 0; //指纹登录
                     // let isGesture = plus.storage.getItem("gesture") ? plus.storage.getItem("gesture") : 0; //手势登录
-                    console.log('isFingerprint', isFingerprint)
                     // console.log('isGesture', isGesture)
                     //手势和指纹都未开启 直接跳过
                     //指纹开启并且已验证 直接跳过

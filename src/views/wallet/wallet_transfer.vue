@@ -13,7 +13,7 @@
                 <span>{{walletInfo.tokenSymbol || walletInfo.walletType}}</span>
                 <span style="color:#2364bc" @click="transfer.price=transferToken.totalAccount">余额 {{parseFloat(walletInfo.totalAccount)}}</span>
             </p>
-            <van-field v-model="transfer.price" size="large" placeholder="请输入金额" class="price-size" />
+            <van-field v-model="transfer.price" size="large" type="number" placeholder="请输入金额" class="price-size" />
         </div>
         <div class="amount address">
             <p class="amount-top">
@@ -25,7 +25,7 @@
         </div>
         <div class="minersFee-box">
             <span>矿工费</span>
-            <span @click="$router.push({path:'/set_minerFee',query:{gas:transfer.gas}})"> {{ formatNum(etherValue) }} {{ walletInfo.walletType }} ≈ ￥{{turnCNY(etherValue).toFixed(2) }}
+            <span @click="$router.push({path:'/set_minerFee',query:{gas:transfer.gas}});$store.state.transferKeep={value:transfer.price,address:transfer.address}"> {{ formatNum(etherValue) }} {{ walletInfo.walletType }} ≈ ￥{{turnCNY(etherValue).toFixed(2) }}
                 <van-icon :name="!is_seeFee?'arrow':'arrow-down'" />
             </span>
             
@@ -142,19 +142,6 @@ export default {
     },
 
     created(){
-        
-        // if(window.plus){
-        //     this.walletInfo =  JSON.parse(plus.storage.getItem('tokenList'))
-        // }else{
-        //     this.walletInfo =  JSON.parse(localStorage.getItem('tokenList'))
-        // }
-
-        // if(this.$route.query.walletInfo){
-        //     let index = JSON.parse(this.$route.query.walletInfo).tokenIndex
-        //     this.transferToken = this.walletInfo.walletCurrencyModels[index]
-        //     this.ethMinerInfo() //获取EHT矿工数据
-        //     return
-        // }
         if(this.$route.query.qrAddress){   //扫码信息          
             if( this.$route.query.qrAddress.substr(0,1) === '{'){
                 let qrData = JSON.parse(this.$route.query.qrAddress)
@@ -188,7 +175,7 @@ export default {
                 this.showBtn = true
             }
         }
-        console.log(this.walletInfo)
+        // console.log(this.walletInfo)
 
     },
     beforeDestroy(){
@@ -399,22 +386,22 @@ export default {
             }
             
         },
-        transfer_next(){   
+        transfer_next(){  
+            var WAValidator = require('wallet-address-validator');
             if(!(/((^[1-9]\d*)|^0)(\.\d{0,20}){0,1}$/.test(this.transfer.price))){
                 this.$notify({ type: 'danger', message: '输入的金额不正确' });
                 return
             }else if(Number(this.transfer.price) > Number(this.transferToken.quantity)){
-                this.$notify({ type: 'danger', message: '余额不足' });
+                this.$toast("余额不足");  
                 return
             }
-            // else if(this.transfer.address.startsWith('0x')&&this.transfer.address.length!==42 || !this.transfer.address.startsWith('0x')&&this.transfer.address.length!==40   ){
-            //     this.$notify({ type: 'danger', message: '请输入正确收款地址' });
-            //     return
-            // }
+            else if(!WAValidator.validate(this.transfer.address, this.walletInfo.walletType) ){
+                this.$toast("钱包地址不合法");  
+                return
+            }
             else{
                 this.transferPay_show=true;
             }
-
         },
         //获取矿工数据
         ethMinerInfo(){    
@@ -434,7 +421,12 @@ export default {
                     this.transfer.gas = 21000
                 }
             }
-            console.log(this.$store.state.minerData)
+            // console.log(this.$store.state.minerData)
+            if(this.$store.state.transferKeep){
+                this.transfer.price = this.$store.state.transferKeep.value
+                this.transfer.address = this.$store.state.transferKeep.address
+                this.$store.state.transferKeep = ''
+            }
             if(this.$store.state.minerData){
                 this.transfer.gasPrice = this.$store.state.minerData.gasPrice;
                 this.transfer.gas = this.$store.state.minerData.gas;
@@ -442,7 +434,7 @@ export default {
             }else{
                 get_ethMinerInfo().then(res => {
                     if(res.code === 0){
-                        console.log(res.data)
+                        // console.log(res.data)
                         this.transfer.gasPrice = res.data.midGasPrice
                         this.public_js.SetStorage('transferCode',res.data)
     
