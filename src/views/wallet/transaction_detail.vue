@@ -6,7 +6,7 @@
                 <div class="state-img">
                     <img src="@/assets/images/other/transferSuccess.png" alt="">
                 </div>
-                <p> {{ transactionInfo.valueToEth==0?'合约调用':''}}成功</p>
+                <p> {{ transactionInfo.contract?'合约调用':''}}成功</p>
                 <p class="transTime"> {{public_js.transformationTime(transactionInfo.timestamp*1000)}} </p>
             </div>
             <div class="cell">
@@ -26,12 +26,19 @@
                 v-clipboard:success="onCopy"
                 >{{ transactionInfo.to }}</span>
             </div>
-            <div class="cell">
+            <div class="cell van-hairline--bottom">
                 <span>付款地址</span>
                 <span
                 v-clipboard:copy="transactionInfo.from"
                 v-clipboard:success="onCopy"
                 >{{ transactionInfo.from }}</span>
+            </div>
+            <div class="cell" v-if="transactionInfo.contract">
+                <span>合约地址</span>
+                <span
+                v-clipboard:copy="transactionInfo.contract"
+                v-clipboard:success="onCopy"
+                >{{ transactionInfo.contract }}</span>
             </div>
             <div class="cell space van-hairline--bottom">
                 <span>交易区块</span>

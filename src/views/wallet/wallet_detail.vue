@@ -34,7 +34,7 @@
                                         <img :src="imgState(item)" alt="">
                                     </div>
                                     <div class="hot-info">
-                                        <span>{{ public_js.ellipsAddress(item.from.toLowerCase()==walletInfo.address.toLowerCase()?item.to:item.from,6) }}</span>
+                                        <span v-if="item.to">{{ public_js.ellipsAddress(item.from.toLowerCase()==walletInfo.address.toLowerCase()?item.to:item.from,6) }}</span>
                                         <span style="color:#999">{{public_js.transformationTime(item.timestamp*1000)}}</span>
 
                                         <span style="margin-top:5px" v-if="item.valueToEth!=0&&$store.state.lastBlockNumber&&$store.state.lastBlockNumber - item.blockNumber<12 && item.from.toLowerCase()==walletInfo.address.toLowerCase()">
@@ -178,6 +178,7 @@ export default {
                     PagingParams:state?0: this.transactionData.length,
                     Address: this.walletInfo.address,
                     ContractAddress: this.walletInfo.contractAddress,
+                    TransferType:-1
                 }
                 get_transferList_erc20(params).then(res => {    //ERC20
                     this.isLoading =false
@@ -206,7 +207,8 @@ export default {
                     PageCount:10,
                     GetType:'After',
                     PagingParams:state?0: this.transactionData.length,
-                    Address: this.walletInfo.address
+                    Address: this.walletInfo.address,
+                    TransferType:-1
                 }
                 get_transferList(params).then(res => {     //eth
                     this.isLoading =false

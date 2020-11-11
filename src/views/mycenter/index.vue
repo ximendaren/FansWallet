@@ -52,16 +52,19 @@ export default {
         if(plus.fingerprint) {
           if(!plus.fingerprint.isSupport()) {
               this.$toast('此设备不支持指纹识别');
+              this.fingerprint =false
               return;
           }
           if(!plus.fingerprint.isEnrolledFingerprints()) {
               this.$toast('此设备未录入指纹，请到设置中开启');
+              this.fingerprint =false
               return;
           }
           this.fingerprint_show=true
         }
       }else{
         this.$toast('此设备不支持指纹识别');
+        this.fingerprint =false
       }
     },
     //验证结果

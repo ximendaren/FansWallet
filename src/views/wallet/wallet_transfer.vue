@@ -399,9 +399,15 @@ export default {
                 this.$toast("钱包地址不合法");  
                 return
             }
-            else{
-                this.transferPay_show=true;
+            if(this.walletInfo.contractProtocol&&this.walletInfo.contractProtocol=="ERC20"){
+               if(this.transfer.gas < 21000){
+                   
+               }
             }
+
+     
+            this.transferPay_show=true;
+  
         },
         //获取矿工数据
         ethMinerInfo(){    
