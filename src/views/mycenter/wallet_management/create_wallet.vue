@@ -1,8 +1,6 @@
 <template>
     <div class="container-wallet">
-        <div class="header">
-          <van-icon name="arrow-left" class="back" @click="$router.back()" />
-        </div>
+        <pageheader></pageheader>
         <div class="logo-box">
             <img :src='"../../../assets/images/token_logo/"+$route.query.wallet+".png"' style="width:50px;height:50px">
             <p><b>创建{{fullName}}钱包</b></p>
@@ -134,7 +132,9 @@
 import CryptoJS from "crypto-js";
 import {get_mnemonicWord, createWallet} from '@/api/mycenter/wallet'
 import { created_wallet } from "@/api/wallet"
+import pageheader from '@/components/pageheader'
 export default {
+    components:{pageheader},
     data(){
         return{
            clientHeight:document.documentElement.clientHeight,
@@ -448,7 +448,7 @@ export default {
     .logo-box{
         height: 90px;
         text-align: center;
-        padding-top: 10px;
+        padding-top: 30px;
         p{
             font-size: 14px;
         }

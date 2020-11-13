@@ -24,7 +24,8 @@ export default new Vuex.Store({
     appTop:0,
     lastBlockNumber:0,
     scanData:'',
-    transferKeep:''
+    transferKeep:'',
+    new_walletInfo:[]
   },
   mutations: {
     changeRoute(state,newVal){

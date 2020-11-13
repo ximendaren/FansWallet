@@ -1,9 +1,7 @@
 <template>
   <div class="PrivateKey">
-    <div class="header">
-      <van-icon name="arrow-left" size="22" @click="$router.go(-2)" />&nbsp;
-      导出{{exportType}}
-    </div>
+    <pageheader></pageheader>
+
     <van-tabs v-model="active">
 
       <van-tab :title="exportType">
@@ -72,7 +70,9 @@
 
 import QRCode from "qrcodejs2";
 import { ethers } from 'ethers';
+import pageheader from '@/components/pageheader'
 export default {
+  components:{pageheader},
   data() {
     return {
       active:0,
@@ -98,6 +98,7 @@ export default {
     }
   },
   created() {
+    
     this.exportType = this.$route.query.tag
     console.log(this.$store.state.wallet_data)
     if(this.exportType === 'Keystore'){
@@ -105,7 +106,7 @@ export default {
     }else{
       this.importData = this.$store.state.wallet_data.privateKey
     }
-
+    this.$route.meta.headline = '导出'+this.exportType
     // var wallet =new ethers.Wallet(this.wallet_data.privateKey);
     //  wallet.encrypt('chen911918',percent=>{}).then(res => {
     //    console.log(res)

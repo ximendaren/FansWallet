@@ -10,7 +10,7 @@ const request = axios.create({
     baseURL: 'https://api.fanswallet.chainfans.io',
 
     // 线上接口
-    // baseURL: 'https://api.cloud.chainfans.io',
+    // baseURL: 'https://api.fanswallet.chainfans.cloud',
 
 })
 request.defaults.headers.get['Content-Type'] = 'application/json';

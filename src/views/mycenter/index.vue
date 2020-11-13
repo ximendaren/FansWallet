@@ -7,6 +7,7 @@
     </div>
 
     <!-- <van-cell title="分享好友" is-link center @click="$router.push({name:'sharefriend'})"/> -->
+    <!-- <van-cell title="tab" is-link center @click="$router.push({name:'myDAPP'})"/> -->
     <van-cell title="客服售后" is-link center @click="$router.push({name:'consultation'})"/>
     <van-cell title="反馈&意见" is-link center @click="feedbackClick" />
     <van-cell title="清理缓存" is-link center :value="Cache" @click="clearCache" />

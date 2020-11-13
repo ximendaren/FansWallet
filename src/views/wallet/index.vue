@@ -154,9 +154,11 @@ export default {
         this.isUpdate()
         this.walletInfo = this.public_js.GetStorage('walletInfo').find(n=> n.isMain ==1);
         this.walletData()
-        this.timer = setInterval(() => {
-            this.walletData()
-        },5000)
+        if(!this.$store.state.new_walletInfo.length){
+            setInterval(() => {
+                this.walletData()
+            },5000)
+        }
 
         // this.chainInfo()
         // this.timer = setInterval(() => {
@@ -177,8 +179,8 @@ export default {
 
     // },
     beforeDestroy(){
-        clearInterval(this.timer)
-        this.timer = null
+        // clearInterval(this.timer)
+        // this.timer = null
     },
     mounted(){
         this.$refs.bgBox.style.height = window.screen.height- this.$refs.header.clientHeight-50-parseInt(this.$store.state.appTop)+'px'
@@ -240,8 +242,8 @@ export default {
                     this.isLoading = false
                 },1000)
                 if(res.code === 0){
-                    // this.walletInfo = this.public_js.GetStorage('walletInfo');
-                    // let i = walletData.findIndex(n => n.isMain === 1)
+                    this.$store.state.new_walletInfo = res.data;
+
                     this.walletInfo.assetsToken.forEach(item => {
                         res.data.forEach(item2 => {
                             if(item.tokenSymbol == item2.tokenSymbol){
@@ -254,20 +256,18 @@ export default {
                             }
                         })
                     })
-                    // this.walletInfo[i] = JSON.parse(JSON.stringify(this.walletInfo[i]))
 
-                    this.totalAmount = 0;
-                    this.totalPriceCny = 0;
+                    let totalPrice = 0;
                     res.data.forEach(item => {
-                        this.totalAmount += item.amountToEth
-                        this.totalPriceCny += item.amountToEth * item.tokenPriceCny
+                        totalPrice += item.amountToEth * item.tokenPriceCny
                     })
+                     this.totalPriceCny = totalPrice;
 
-                    let data = this.public_js.GetStorage('walletInfo');  
-                    let i = data.findIndex(n => n.isMain === 1);
-                    data[i] = this.walletInfo
+                    // let data = this.public_js.GetStorage('walletInfo');  
+                    // let i = data.findIndex(n => n.isMain === 1);
+                    // data[i] = this.walletInfo
 
-                    this.public_js.SetStorage('walletInfo',data);
+                    // this.public_js.SetStorage('walletInfo',data);
                     
                 }else{
                     this.$toast(res.messages)

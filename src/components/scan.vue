@@ -118,7 +118,7 @@
           scan.close();//关闭条码识别控件
           if(that.codeUrl){
             console.log(that.codeUrl)
-            that.$router.push({path:'/wallet_transfer',query:{qrAddress:that.codeUrl}})
+            that.$router.replace({path:'/wallet_transfer',query:{qrAddress:that.codeUrl}})
           }
         }
       },

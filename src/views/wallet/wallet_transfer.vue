@@ -11,7 +11,7 @@
         <div class="amount">
             <p class="amount-top">
                 <span>{{walletInfo.tokenSymbol || walletInfo.walletType}}</span>
-                <span style="color:#2364bc" @click="transfer.price=transferToken.totalAccount">余额 {{parseFloat(walletInfo.totalAccount)}}</span>
+                <span style="color:#2364bc" @click="transfer.price=walletInfo.totalAccount">余额 {{parseFloat(walletInfo.totalAccount)}}</span>
             </p>
             <van-field v-model="transfer.price" size="large" type="number" placeholder="请输入金额" class="price-size" />
         </div>
@@ -20,7 +20,7 @@
                 <span>收款地址</span>
                 <van-icon name="column" class="book" @click="address_show=true" />
             </p>
-            <van-field v-model="transfer.address" size="large" placeholder="请输入收款地址" class="address-txt" right-icon="scan" @click-right-icon="$store.state.scanData=walletInfo;$router.push({name:'scan'})" />
+            <van-field v-model="transfer.address" size="large" placeholder="请输入收款地址" class="address-txt" right-icon="scan" @click-right-icon="$store.state.scanData=walletInfo;$router.replace({name:'scan'})" />
             <van-field v-model="transfer.remark" label="备注" placeholder="(选填)" label-width="35px" />
         </div>
         <div class="minersFee-box">
@@ -154,9 +154,13 @@ export default {
             if(this.$store.state.scanData){
                 this.walletInfo = this.$store.state.scanData
             }else{
-                this.walletInfo = this.public_js.GetStorage('walletInfo').find(n => n.isMain)              
-            }       
-            this.go_Back = 'wallet'
+                this.walletInfo = this.public_js.GetStorage('walletInfo').find(n => n.isMain==1).assetsToken[0];  
+                this.walletInfo.totalAccount = this.$store.state.new_walletInfo.find(n => n.contractAddress === '').amountToEth
+                this.isMain = 1           
+                // console.log( 2222 ,this.walletInfo.totalAccount);
+            }    
+
+            // this.go_Back = 'wallet'
         }else{
             this.walletInfo = JSON.parse(this.$route.query.walletInfo)
             if(this.walletInfo.isMain){
@@ -179,9 +183,9 @@ export default {
 
     },
     beforeDestroy(){
-        if(this.go_Back){
-            this.$router.push('wallet')
-        }
+        // if(this.go_Back){
+        //     this.$router.push('wallet')
+        // }
     },
     watch:{
         senior_checked(state){
@@ -307,6 +311,7 @@ export default {
                 this.$toast.clear();
                 if(res.code === 0){
                     this.$toast('打包中');
+                    this.go_Back = ''
                     let Trading = {}
                     if(this.walletInfo.contractProtocol&&this.walletInfo.contractProtocol=='ERC20'){
 
@@ -398,14 +403,12 @@ export default {
             else if(!WAValidator.validate(this.transfer.address, this.walletInfo.walletType) ){
                 this.$toast("钱包地址不合法");  
                 return
-            }
-            if(this.walletInfo.contractProtocol&&this.walletInfo.contractProtocol=="ERC20"){
-               if(this.transfer.gas < 21000){
-                   
-               }
+            }else if(this.transfer.address == this.walletInfo.address){
+                this.$toast("钱包地址不能相同");
+                return
             }
 
-     
+
             this.transferPay_show=true;
   
         },

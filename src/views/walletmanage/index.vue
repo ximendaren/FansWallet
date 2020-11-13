@@ -13,13 +13,13 @@
             <div class="content">
               <img :src="require(`@/assets/images/token_logo/${item.walletType}.png`)" alt="">
               <div class="title"> {{item.walletName}} </div>
-              <span class="more" @click="$router.push({name:'walletdetail',query:{data:JSON.stringify(item)}})"><van-icon name="ellipsis" size="24" /></span>
+              <span class="more" @click.stop="$router.push({name:'walletdetail',query:{data:JSON.stringify(item)}})"><van-icon name="ellipsis" size="24" /></span>
               
             </div>
             <p class="address">
-              <span v-clipboard:copy="item.address" v-clipboard:success.stop="onCopy" @click.stop>
+              <span>
                 {{public_js.ellipsAddress(item.address,12)}}
-                <van-icon class="icon" :name="require('@/assets/images/other/copy.png')" />
+                <van-icon v-clipboard:copy="item.address" v-clipboard:success.stop="onCopy" @click.stop class="icon" :name="require('@/assets/images/other/copy.png')" />
               </span>
             </p>
             <div class="defult" v-if="item.isMain">main</div>
@@ -62,7 +62,7 @@ export default {
   components:{pageheader},
   data(){
     return{
-      tokenList:['ALL','ETH','BTC','TRX'],
+      tokenList:['ALL','ETH','BTC','TRX','NEO','EOS'],
       walletType:'ALL',
       walletInfo:[],
       walletList:[],
@@ -107,7 +107,7 @@ export default {
       this.$router.push({path:'/create_wallet',query:{wallet:this.chekType}})
     },
     onCopy(e) {
-      this.$toast("复制成功");
+      this.$toast("地址复制成功");
     },
   }
 }

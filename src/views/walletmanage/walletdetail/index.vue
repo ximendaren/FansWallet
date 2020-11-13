@@ -19,8 +19,8 @@
       <!-- <van-cell size="large" icon="cash-on-deliver" title="免密支付" is-link center @click="$router.push('freePayment')" /> -->
       <!-- <van-cell size="large" icon="edit" title="修改钱包密码" is-link center @click="$router.push({path:'/walletPassword',query:{walletId:walletInfo.walletId}})   " /> -->
     </div>
-    <div class="del-wallet" @click="exportwords('del')"><b>删除钱包</b></div>
-    <!-- <div class="del-wallet" v-if="show_del" @click="exportwords('del')"><b>删除钱包</b></div> -->
+    <!-- <div class="del-wallet" @click="exportwords('del')"><b>删除钱包</b></div> -->
+    <div class="del-wallet" v-if="show_del" @click="exportwords('del')"><b>删除钱包</b></div>
 
     <!-- 修改钱包名称 -->
     <van-dialog

@@ -5,8 +5,8 @@
         
             <div class="tokenEcharts-box" @touchstart="refresh_state = false">
                 <p>{{walletInfo.tokenSymbol||walletInfo.walletType}}</p>
-                <p> {{walletInfo.totalAccount}}</p> 
-                <p>≈￥{{walletInfo.totalUsd.toFixed(2) }}</p>
+                <p> {{totalAccount}}</p> 
+                <p>≈￥{{totalUsd.toFixed(2) }}</p>
             </div>  
             <div class="pending-box">
                 <div class="pending-module" v-for="(item,index) in pendingData" :key="index">
@@ -17,10 +17,10 @@
                 </div>
             </div>
 
-            <van-tabs  color="#2364bc" v-model="activeType" :animated="true" :swipeable="true">
+            <van-tabs color="#2364bc" v-model="activeType" :animated="true" :swipeable="true" @change="changeTab">
                 <van-tab v-for="(title,active) in tokenState" :key="active" :title="title" color="#2364bc">
-                    <div class="token-box" @scroll="scroll" >
-                        <van-pull-refresh v-model="isLoading" @refresh="refresh()" :disabled="refresh_state" style="min-height: 50vh;">  
+                    <div class="token-box" >
+                        <van-pull-refresh v-model="isLoading" @refresh="refresh()" :disabled="refresh_state">  
                         <van-list
                             v-model="loading"
                             :finished="finished"
@@ -28,15 +28,14 @@
                             :immediate-check="false "
                             @load="transferList()"
                         >        
-                            <div class="token-module" v-for="(item,index) in tokenTabs(transactionData,active)" :key="index" @click="viewTransferInfo(item)">
+                            <div class="token-module" v-for="(item,index) in transactionData" :key="index" @click="viewTransferInfo(item)">
                                 <div class="hot-module van-hairline--bottom">
                                     <div class="hot-img">
                                         <img :src="imgState(item)" alt="">
                                     </div>
-                                    <div class="hot-info">
+                                    <div class="hot-info" v-if="item.txStatus">
                                         <span v-if="item.to">{{ public_js.ellipsAddress(item.from.toLowerCase()==walletInfo.address.toLowerCase()?item.to:item.from,6) }}</span>
                                         <span style="color:#999">{{public_js.transformationTime(item.timestamp*1000)}}</span>
-
                                         <span style="margin-top:5px" v-if="item.valueToEth!=0&&$store.state.lastBlockNumber&&$store.state.lastBlockNumber - item.blockNumber<12 && item.from.toLowerCase()==walletInfo.address.toLowerCase()">
                                             <van-progress
                                             :pivot-text="$store.state.lastBlockNumber - item.blockNumber<0?'0':($store.state.lastBlockNumber - item.blockNumber).toString()"
@@ -44,11 +43,18 @@
                                             :percentage="($store.state.lastBlockNumber - item.blockNumber ) /12*100"
                                             />
                                         </span> 
-
+                                    </div>
+                                    <div v-else class="hot-info">
+                                        <span >Hash: {{ public_js.ellipsAddress(item.transactionHash,8) }} </span>
+                                        <span style="color:#999">{{public_js.transformationTime(item.timestamp*1000)}}</span>
                                         
                                     </div>
-                                    <div class="hot-state" :style="{color:item.from.toLowerCase()==walletInfo.address.toLowerCase()?'red':'#09bb07'}">
+
+                                    <div v-if="item.txStatus" class="hot-state" :style="{color:item.from.toLowerCase()==walletInfo.address.toLowerCase()?'red':'#09bb07'}">
                                         {{item.from.toLowerCase()==walletInfo.address.toLowerCase()?item.valueToEth==0?0:'-'+item.valueToEth:'+'+item.valueToEth}}
+                                    </div>
+                                    <div v-else class="hot-state">
+                                        <span class="txFail">转账失败</span>
                                     </div>
                                 </div>
                             </div>
@@ -80,7 +86,7 @@ export default {
     },
     data() {
         return {
-            tokenState:["全部","转出","转入","失败"],
+            tokenState:["全部","转入","转出","失败"],
             walletInfo:{},
             transactionData:[],
             isLoading: false,
@@ -124,7 +130,6 @@ export default {
         this.timer = setInterval(() => {
             this.chainInfo()
         },10000)
-
         console.log(this.walletInfo)
     },
     beforeDestroy(){
@@ -161,24 +166,55 @@ export default {
             }
         }
     },
+    computed:{
+        totalAccount(){
+            if(!this.$store.state.new_walletInfo.length){
+                return 0
+            }
+            if(!this.walletInfo.contractAddress){
+                return this.$store.state.new_walletInfo.find(n => n.contractAddress == '').amountToEth
+            }else{
+                return this.$store.state.new_walletInfo.find(n => n.contractAddress == this.walletInfo.contractAddress).amountToEth
+            }
+            
+        },
+        totalUsd(){
+            if(!this.$store.state.new_walletInfo.length){
+                return 0
+            }
+            if(!this.walletInfo.contractAddress){
+                let new_data = this.$store.state.new_walletInfo.find(n => n.contractAddress == '')
+                return new_data.amountToEth * new_data.tokenPriceCny
+            }else{
+                let new_data = this.$store.state.new_walletInfo.find(n => n.contractAddress == this.walletInfo.contractAddress)
+                return new_data.amountToEth * new_data.tokenPriceCny
+            }
+        }
+    },
     methods:{
+        changeTab(state){
+            this.loading = true;
+            this.finished = false;
+            this.transactionData = [];
+            this.transferList('refresh')
+        },
         //交易记录
-        transferList(state){
+        transferList(state){  
             this.$toast.loading({
                 duration: 0,
                 message: '加载中...',
                 forbidClick: true,
                 loadingType: 'spinner'
             });
-            if(this.walletInfo.contractProtocol &&  this.walletInfo.contractProtocol == 'ERC20' ){
+            if(this.walletInfo.contractProtocol && this.walletInfo.contractProtocol == 'ERC20' ){
 
                 let params = {
-                    PageCount:10,
+                    PageCount:20,
                     GetType:'After',
-                    PagingParams:state?0: this.transactionData.length,
+                    PagingParams:state?0:this.transactionData.length,
                     Address: this.walletInfo.address,
                     ContractAddress: this.walletInfo.contractAddress,
-                    TransferType:-1
+                    TransferType:this.activeType-1
                 }
                 get_transferList_erc20(params).then(res => {    //ERC20
                     this.isLoading =false
@@ -191,7 +227,7 @@ export default {
                         }
 
                         this.loading = false;
-                        if (this.transactionData.length >= res.totalCount) {
+                        if (this.transactionData.length >= res.totalCount) {   
                             this.finished = true;
                         }
 
@@ -204,11 +240,11 @@ export default {
                 })
             } else {
                 let params = {
-                    PageCount:10,
+                    PageCount:20,
                     GetType:'After',
                     PagingParams:state?0: this.transactionData.length,
                     Address: this.walletInfo.address,
-                    TransferType:-1
+                    TransferType:this.activeType-1
                 }
                 get_transferList(params).then(res => {     //eth
                     this.isLoading =false
@@ -297,185 +333,17 @@ export default {
             });
         },
 
-
-
-
-        transactionList(load){   //获取交易纪录
-        return
-            this.transactionData = []
-            
-            let params = {
-                TokenAddress:this.walletInfo.tokenAddress,
-                Address:this.walletInfo.address,
-                PageId:1,
-                PageSize:100
-            }
-            if(!load){
-                this.$toast.loading({
-                    duration: 0,
-                    message: '加载中...',
-                    forbidClick: true,
-                    loadingType: 'spinner'
-                });
-            }
-            get_transactionList(params).then(res => {
-                
-                if(this.isLoading){
-                    this.$toast('刷新成功');
-                    this.isLoading = false;
-                }
-                if(res.code === 0){
-                        // 是否再转账中  并且 有交易hash
-                    let transferList=[]
-                    if(window.plus){
-                        let plusTransferList =plus.storage.getItem("transferList");
-                        if(plusTransferList){
-                            transferList = JSON.parse(plusTransferList);
-                        }
-                    }else{
-                        let localTransferList=localStorage.getItem('transferList')
-                        if(localTransferList){
-                            transferList = JSON.parse(localTransferList);
-                        }
-                    }
-                    if(transferList && transferList.length !== 0 ){
-                        if(transferList.filter(n=>n.tokenAddress.toLowerCase()==this.walletInfo.tokenAddress.toLowerCase()).length>0){
-                            // this.loadingData = res.data
-                            //渲染列表数据
-                            transferList.filter(n=>n.tokenAddress.toLowerCase()==this.walletInfo.tokenAddress.toLowerCase()).forEach(txInfo=>{
-                              
-                                if(!(res.data.some(n => n.transactionHash === txInfo.transactionHash))){
-                                    txInfo.blockNumber='';
-                                    txInfo.blockHash='';
-                                    txInfo.gasUsed='';
-                                    res.data.unshift(txInfo)
-                         
-                                }else{
-                                    let nowTransfer= res.data.find(n=>n.transactionHash==txInfo.transactionHash)
-                                    if(nowTransfer.confirmations>txInfo.confirmations){
-                                        nowTransfer.confirmations=txInfo.confirmations; 
-                                        nowTransfer.status= txInfo.status;
-                                    }else{
-                                        txInfo.confirmations = nowTransfer.confirmations;
-                                        txInfo.status = nowTransfer.status
-                                    }
-                                }
-                            })
-                            console.log(   'time',this.timer)
-                            if(!this.timer){
-                   
-                                this.transferState(transferList)
-                            }
-                        }
-                    }
-                    this.transactionData = res.data
-                    this.$toast.clear();
-                }else{
-                    this.$toast(res.messages)
-                }
-            }).catch(err => {
-                this.$toast.clear()
-                this.$toast('网络异常')
-            })
-        },
-        transferState(transferList){  //转账打包数据
-            this.timer = setInterval(() => {  
-                // transferList.filter(n=>n.tokenAddress.toLowerCase()==this.walletInfo.tokenAddress.toLowerCase())
-                transferList.forEach(transferInfo => {
-                    get_newTransactionState({TransactionHash:transferInfo.transactionHash}).then(res => {
-                        if(res.code === 0){
-                            let data = res.data
-                            let nowTransfer= this.transactionData.find(n=>n.transactionHash==transferInfo.transactionHash)
-                            // console.log("---",this.transactionData);
-                            
-                            if(nowTransfer){
-                                nowTransfer.confirmations=data.confirmations; 
-                                nowTransfer.status= data.status;
-                                if(data.confirmations>12 ){
-                                    if(window.plus){
-                                        let nowTransferList= JSON.parse(plus.storage.getItem("transferList"));
-                                        let savetransferList=  nowTransferList.filter(n=>n.transactionHash!==transferInfo.transactionHash)
-                                        if(savetransferList.length==0){
-                                            plus.storage.setItem("transferList",'');
-                                            clearInterval(this.timer)
-                                            this.timer = ''
-                                        }else{
-                                            plus.storage.setItem("transferList",JSON.stringify(savetransferList));
-                                        }
-                                    }else{
-                                        let nowTransferList=  JSON.parse(localStorage.getItem('transferList'));
-                                        let savetransferList=  nowTransferList.filter(n=>n.transactionHash!==transferInfo.transactionHash)
-                                        if(savetransferList.length==0){
-                                            localStorage.setItem('transferList','');
-                                            clearInterval(this.timer)
-                                            this.timer = ''
-                                        }else{
-                                            localStorage.setItem('transferList',JSON.stringify(savetransferList));
-                                        }
-                                    }
-                                    if(data.status==0){
-                                        this.$toast('交易失败') 
-                                    }else{
-                                        let params = {
-                                            TransactionHash:nowTransfer.transactionHash
-                                        }
-                                        get_transferReceipt(params).then(res=>{
-                                            this.$toast.clear();
-                                            if(res.code===0){
-                                                let transferReceipt = res.data;
-                                                nowTransfer.blockNumber=transferReceipt.blockNumber;
-                                                nowTransfer.blockHash=transferReceipt.blockHash;
-                                                nowTransfer.gas=transferReceipt.gasUsed;
-                                                nowTransfer.gasPrice=transferReceipt.gasPrice;
-                                                nowTransfer.confirmations=transferReceipt.confirmations;
-
-                                            }else{
-                                                this.$toast(res.messages)
-                                            }
-                                        }).catch(err => {
-
-                                        })
-                                    }
-                                    // this.transactionList(1)
-                                }else{
-                                    if(window.plus){
-                                        transferList = JSON.parse(plus.storage.getItem("transferList"));
-                                        let nowInfo = transferList.find(n=>n.transactionHash==transferInfo.transactionHash)
-                                        nowInfo.confirmations=data.confirmations; 
-                                        nowInfo.status= data.status;
-                                        plus.storage.setItem("transferList",JSON.stringify(transferList));
-                                    }else{
-                                        transferList = JSON.parse(localStorage.getItem('transferList'));
-                                        let nowInfo = transferList.find(n=>n.transactionHash==transferInfo.transactionHash)
-                                        nowInfo.confirmations=data.confirmations; 
-                                        nowInfo.status= data.status;
-                                        localStorage.setItem("transferList", JSON.stringify(transferList));
-                                    }
-                                }
-                            }       
-                        }else{
-                            this.$toast(res.messages)
-                        }
-                    })
-                })
-            }, 6000);
-            
-        },
-        moreTransfer(){   //多个转账
-
-
-        },
         refresh(){    //刷新
             setTimeout(() => {
-                this.transferList()
+                this.transferList('refresh')
             },500)
         },
         scroll(event) {
             this.scrollTop = event.target.scrollTop
         },
         imgState(item){   //导出导入图片
-            if(item.confirmations&&item.confirmations<12){
-                return require('@/assets/images/wallet/loading.png')
+            if(item.txStatus==0 ){
+                return require('@/assets/images/wallet/fail.png')
             }else if(item.from.toLowerCase()===this.walletInfo.address.toLowerCase()){
                 return require('@/assets/images/wallet/export.png')
             }else if(item.from.toLowerCase()!==this.walletInfo.address.toLowerCase()){
@@ -486,34 +354,12 @@ export default {
             if(active==0){
                 return transactionData
             }else if(active==1){
-                return transactionData.filter(n => n.from.toLowerCase()===this.walletInfo.address.toLowerCase() )
+                return transactionData.filter(n => n.from.toLowerCase()!==this.walletInfo.address.toLowerCase() && n.txStatus === 1 )
             }else if(active==2){
-                return transactionData.filter(n => n.from.toLowerCase()!==this.walletInfo.address.toLowerCase() )
+                return transactionData.filter(n => n.from.toLowerCase()===this.walletInfo.address.toLowerCase() && n.txStatus === 1 )
+            }else if(active==3){
+                return transactionData.filter(n => n.txStatus === 0 )
             }
-        },
-        walletBalance(){   //获取金额
-            // let params = {
-            //     TokenAddress:this.walletInfo.tokenAddress,
-            //     Address:this.walletInfo.address
-            // }
-            // this.$toast.loading({
-            //     duration: 0,
-            //     message: '加载中...',
-            //     forbidClick: true,
-            //     loadingType: 'spinner'
-            // });
-            // get_walletBalance(params).then(res => {
-            //      this.$toast.clear();
-            //     if(res.code === 0){
-                 
-            //         this.tokenBalance = res.data
-            //     }else{
-            //         this.$toast(res.messages)
-            //     }
-            // }).catch(err => {
-            //      this.$toast.clear();
-            //     this.$toast('网络异常')
-            // })
         },
         transfer(){   // 转账
             this.$router.push({path:'/wallet_transfer',query:{walletInfo:JSON.stringify(this.walletInfo)}})
@@ -596,7 +442,7 @@ export default {
                     box-sizing: border-box;
                     span{
                         display: block;
-                        width:270px;
+                        width:260px;
                         line-height: 20px;
                         padding: 0px 10px;
                         box-sizing: border-box;
@@ -621,6 +467,11 @@ export default {
                     text-overflow:ellipsis; //溢出用省略号显示
                     white-space:nowrap; //溢出不换行
                     display: inline-block;
+                }
+                .txFail{
+                    color: red;
+                    font-size: 13px;
+                    
                 }
             }
             .foot-fill{

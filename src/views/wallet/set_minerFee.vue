@@ -116,6 +116,10 @@ export default {
                 this.$toast('Gas不能为空')
                 return
             }
+            if(this.gas < this.$route.query.gas){
+                this.$toast('Gas数量太低')
+                return
+            }
             let minerData = {
                 gasPrice:0,
                 gas:21000

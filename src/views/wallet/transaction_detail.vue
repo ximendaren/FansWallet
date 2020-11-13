@@ -4,9 +4,9 @@
         <div class="detail-box" v-if="transactionInfo">
             <div class="transfer-state">
                 <div class="state-img">
-                    <img src="@/assets/images/other/transferSuccess.png" alt="">
+                    <img :src="transactionInfo.txStatus?require('@/assets/images/other/transferSuccess.png'):require('@/assets/images/other/transferFail.png')" alt="">
                 </div>
-                <p> {{ transactionInfo.contract?'合约调用':''}}成功</p>
+                <p :style="{color:transactionInfo.txStatus?'green':'red'}"> {{ transactionInfo.contract?'合约调用':''}}{{ transactionInfo.txStatus?'成功':'失败' }}    </p>
                 <p class="transTime"> {{public_js.transformationTime(transactionInfo.timestamp*1000)}} </p>
             </div>
             <div class="cell">
