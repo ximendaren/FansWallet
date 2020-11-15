@@ -83,7 +83,8 @@ export default {
                         walletInfo[index].assetsToken.push({
                             tokenSymbol:item.tokenSymbol,
                             tokenName:item.tokenName,
-                            address:item.contractAddress,
+                            address:this.$route.query.address,
+                            contractAddress:item.contractAddress,
                             totalAccount:0,
                             totalUsd:0,
                             walletType:item.tokenType,
@@ -136,6 +137,9 @@ export default {
             })
         },
         searchToken(){    
+            if(!this.tokenValue.length){
+                return
+            }
             let params = {
                 PageCount:15,
                 GetType:'After',

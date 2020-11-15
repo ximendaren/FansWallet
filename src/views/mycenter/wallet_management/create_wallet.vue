@@ -49,41 +49,11 @@
         </van-dialog>
 
 
-        <div class="backups-back">
+        <div class="backups-back" :style="{'padding-top':$store.state.appTop }">
             <van-icon name="arrow-left" @click="backups_show=false" />
         </div>
-        <!-- <div class="backups-tips">
-            <div>备份提示</div>
-            <p>
-
-            </p>
-        </div> -->
         <div class="backups-box">
             <p class="title"><b>备份助记词</b></p>
-            <!-- <p>请按顺序选择助记词，确保备份正确</p> -->
-            <!-- <div class="operation">
-                <span>助记词数量 {{digit}} </span>
-                <van-slider
-                v-model="digit"
-                style="width:80%;margin:10px auto"
-                bar-height="4px"
-                active-color="#ee0a24"
-                :min="12"
-                :max="24"
-                :step="3"
-                />
-
-                <div class="language-box">
-                    <van-radio-group v-model="language" class="language-radio">
-                        <van-radio name="English">英文</van-radio>&nbsp;
-                        <van-radio name="ChineseSimplified">中文简体</van-radio>&nbsp;
-                        <van-radio name="ChineseTraditional">中文繁体</van-radio>&nbsp;
-                        <van-radio name="Japanese">日语</van-radio>                       
-                    </van-radio-group>
-                </div>               
-            </div> -->
-            <!-- <van-button round type="info" size="small" style="font-size:14px;margin-top:10px" @click="mnemonicWord_list()">生成</van-button> -->
-
             <p>请按顺序选择助记词，确保备份正确</p>
             <div class="terms-box">
                 <span v-for="(item,index) in termsData" :key="index">{{item}}</span>
@@ -92,14 +62,13 @@
 
         <van-button size="normal" class="exet" v-if="showBtn" @click="$router.push({name:'walletmanage'})">退出</van-button>
         <van-button type="info" size="normal" class="next" v-if="showBtn" @click="finish_sureMnemonicWord">完成</van-button>
-        <!-- <van-button type="info" size="normal" class="next" v-if="showBtn" @click="sureMnemonicWord_show=true">完成</van-button> -->
         </van-popup>
         <!-- 确认助记词 -->
         <van-popup
             v-model="sureMnemonicWord_show"
             position="right"
             class="sureMnemonicWord">
-            <div class="back">
+            <div class="back" :style="{'padding-top':$store.state.appTop }">
                 <van-icon name="arrow-left" @click="sure_back" />
                 <!-- <van-icon name="arrow-left" @click="sureMnemonicWord_show=false" /> -->
             </div>
@@ -116,16 +85,12 @@
                 </div>
                 <div class="operation-area">
                     <div class="terms-box">
-                        <span v-for="(item,index) in randomTerm" :key="index" @click="push_terms(item,index)">{{item}}</span>
+                        <span v-for="(item,index) in randomTerm" :key="index" :style="{'opacity':confirmArr.includes(index)?'0.5':'1'}" @click="push_terms(item,index)">{{item}}</span>
                     </div>
                 </div>
             </div>
-
-
-        <van-button type="info" size="normal" class="sure_btn" :disabled="randomTerm.length !==0" @click="finish">完成</van-button>
+        <van-button type="info" size="normal" class="sure_btn" :disabled="validationTerm.length != randomTerm.length" @click="finish">完成</van-button>
         </van-popup>
-
-
     </div>
 </template>
 <script>
@@ -151,11 +116,11 @@ export default {
            language: 'English',
            termsData:[],
            sureMnemonicWord_show:false,
-
            validationTerm:[],
            randomTerm:[],
            createInfo:{},
-           mnemonic:''
+           mnemonic:'',
+            confirmArr:[],
         }
     },
     created(){
@@ -199,10 +164,14 @@ export default {
                 this.$toast('钱包名字不能为空')
                 return
             }
-            // if(this.formData.password=='' || this.formData.password.length < 8){
-            //     this.$toast('钱包密码不能为空且不能小于8位')
-            //     return
-            // }
+            if(this.formData.password==''){
+                this.$toast('钱包密码不能为空')
+                return
+            }
+            if(this.formData.password.length < 6){
+                this.$toast('钱包密码不小于6位')
+                return
+            }
             if(this.formData.password !== this.formData.re_password){
                 this.$toast('确认密码不一致')
                 return
@@ -224,11 +193,11 @@ export default {
         },
         async finish_sureMnemonicWord(){  
             this.$toast.loading({
-                duration: 0,       // 持续展示 toast
-                forbidClick: true, // 禁用背景点击
+                duration: 0, // 持续展示 toast
+                forbidClick: true,
                 loadingType: 'spinner',
-                message: '加载中'
-            });  
+                message: '创建中...',
+            });
 
 
             var password = CryptoJS.AES.encrypt(this.formData.password, CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
@@ -254,12 +223,6 @@ export default {
                 var wallet= ethers.Wallet.fromMnemonic(this.mnemonic);
 
                 var wk = new ethers.Wallet(wallet.privateKey);
-                this.$toast.loading({
-                    duration: 0, // 持续展示 toast
-                    forbidClick: true,
-                    loadingType: 'spinner',
-                    message: '创建中...',
-                });
                 await wk.encrypt(this.formData.password,percent=>{}).then(res => {
                     keystore = res
                     this.$toast.clear();
@@ -306,8 +269,7 @@ export default {
                 btcWallet.privateKey = keyPair.toWIF();    // 私钥：L2tduuvVupopVxJ8tFtmGf5KXxKoaJBRFUKU1VCoTX3dtskwwAhF
                 btcWallet.publicKey = keyPair.publicKey;
                 btcWallet.address = bitcoinjs.payments.p2pkh({ pubkey: btcWallet.publicKey }).address;  
-                console.log(1,btcWallet.privateKey)
-                // console.log(2,btcWallet.publicKey)
+                this.createdWallet('BTC',btcWallet.address)
                     assetsToken = [{
                         address:btcWallet.address,
                         tokenLogo:'',
@@ -400,12 +362,14 @@ export default {
             // })
         },
         pull_terms(item,index){  
-            this.randomTerm.push(item)
             this.validationTerm.splice(index,1)
+            this.confirmArr.splice(index,1)
         },
         push_terms(item,index){ 
-            this.validationTerm.push(item)
-            this.randomTerm.splice(index,1)
+            if(!this.confirmArr.includes(index)){
+                this.validationTerm.push(item);
+                this.confirmArr.push(index);
+            }
         },
         finish(){    //完成
             this.$toast.loading({
@@ -415,7 +379,7 @@ export default {
                 message: '加载中'
             });
 
-            if(this.termsData.join(',') === this.validationTerm.join(',')){
+            if(this.termsData.join(' ') === this.validationTerm.join(' ')  ){
                 setTimeout(() => {
                     this.$toast.clear();
                     this.$toast.success('助记词备份正确');
@@ -540,6 +504,7 @@ export default {
             margin: 10px auto;
             padding: 10px 0;
             box-sizing:border-box;
+            min-height: 40px;
             span{
                 line-height: 20px;
                 background: rgb(233, 238, 240);

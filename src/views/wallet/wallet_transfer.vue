@@ -57,7 +57,7 @@
             position="right"
             :style="{ height: '100%',width:'100%' }"
         >
-            <address-book :current_address="transferToken.tokenAddress" @transfer_address="transfer_address"></address-book>
+            <address-book :walletType="walletInfo.walletType" @transfer_address="transfer_address"></address-book>
         </van-popup>
         <!-- 转账支付 -->
         <van-action-sheet v-model="transferPay_show" title="支付详情" :round="true" class="transferPay-set">
@@ -168,7 +168,6 @@ export default {
                 this.isMain = 1
             }
         }
-
         this.ethMinerInfo() //获取EHT矿工数据
     },
     mounted(){

@@ -1,11 +1,5 @@
 <template>
     <div class="container-nav">
-        <!-- <div class="header van-hairline--bottom">
-            <van-icon name="balance-pay" class="header-ico" @click="$router.push({path:'walletmanage',query:{switch:1}})" />
-            <span>钱包</span>
-            <van-icon name="scan" class="header-ico" @click="$router.push({name:'scan'})" />
-        </div> -->
-
         <div class="header" ref="header" :style="{'padding-top':$store.state.appTop}">
             <van-icon name="balance-pay" class="header-ico" @click="$router.push({path:'walletmanage',query:{switch:1}})" />
             <span>钱包</span>
@@ -29,8 +23,6 @@
                     </div>
                     <div class="info-right">
                         <p class="more"><van-icon name="ellipsis" @click="walletDetail" /></p>
-                        <!-- <p v-if="isHideAmount" class="wallet-price"><b> {{parseFloat(totalAmount)}}</b></p>
-                        <p v-else class="wallet-price"><b>∗∗∗∗</b></p> -->
                         <p v-if="isHideAmount" class="wallet-price">￥{{parseFloat(totalPriceCny).toFixed(2)}} </p>
                         <p v-else class="wallet-price">￥<span class="hide-p">∗∗∗∗</span></p>
                     </div>    
@@ -154,11 +146,12 @@ export default {
         this.isUpdate()
         this.walletInfo = this.public_js.GetStorage('walletInfo').find(n=> n.isMain ==1);
         this.walletData()
-        if(!this.$store.state.new_walletInfo.length){
-            setInterval(() => {
+        // if(!this.$store.state.new_walletInfo.length){
+            this.timer = setInterval(() => {
                 this.walletData()
             },5000)
-        }
+        // }
+
 
         // this.chainInfo()
         // this.timer = setInterval(() => {
@@ -179,8 +172,8 @@ export default {
 
     // },
     beforeDestroy(){
-        // clearInterval(this.timer)
-        // this.timer = null
+        clearInterval(this.timer)
+        this.timer = null
     },
     mounted(){
         this.$refs.bgBox.style.height = window.screen.height- this.$refs.header.clientHeight-50-parseInt(this.$store.state.appTop)+'px'
@@ -229,7 +222,7 @@ export default {
             this.$router.push({path:'/wallet_detail',query:{walletInfo:JSON.stringify(item)}})
         },
          //获取钱包数据
-        walletData(){   
+        walletData(){
             let params = {
                 PageCount:10,
                 GetType:'After',
@@ -246,7 +239,8 @@ export default {
 
                     this.walletInfo.assetsToken.forEach(item => {
                         res.data.forEach(item2 => {
-                            if(item.tokenSymbol == item2.tokenSymbol){
+                            if(item.contractAddress == item2.contractAddress){
+                                item.tokenSymbol = item2.tokenSymbol
                                 item.address = item2.address
                                 item.tokenDecimals = item2.tokenDecimals
                                 item.totalAccount = item2.amountToEth

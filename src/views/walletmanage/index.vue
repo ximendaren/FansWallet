@@ -22,7 +22,7 @@
                 <van-icon v-clipboard:copy="item.address" v-clipboard:success.stop="onCopy" @click.stop class="icon" :name="require('@/assets/images/other/copy.png')" />
               </span>
             </p>
-            <div class="defult" v-if="item.isMain">main</div>
+            <div class="defult" v-if="item.isMain"><van-icon name="passed" /></div>
           </div>
         </div>
       </van-tab>
@@ -46,8 +46,7 @@
       v-model="createWallet_show"
       position="bottom"
       closeable
-      class="createWallet-box"
-      :style="{ height: '28%' }">
+      class="createWallet-box">
       
         <van-button type="default" plain size="large" class="createWallet-btn" @click="create_wallet()">创建</van-button>
         <van-button type="default" plain size="large" class="createWallet-btn" @click="$router.push({path:'/import_wallet',query:{walletToken:chekType}})">导入</van-button>
@@ -170,7 +169,8 @@ export default {
       .defult{
         position: absolute;
         bottom: 5px;
-        right: 5px;
+        right: 15px;
+        font-size: 18px;
       }
     }
   }
@@ -211,9 +211,10 @@ export default {
     text-align: center;
     padding: 40px 0 0 ;
     box-sizing: border-box;
+    height: 180px;
     .createWallet-btn{
-      width: 94%;
-      margin-top: 10px;
+      width: 350px;
+      margin-top: 12px;
       color: rgb(48, 158, 201)
     }
   }

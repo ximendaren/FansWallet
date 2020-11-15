@@ -48,11 +48,11 @@ export default {
         this.linkData = JSON.parse(this.$route.query.data);console.log(this.linkData)
         this.title = this.linkData.dappUrl
         this.bookmark = this.public_js.GetStorage('bookmark') || []
-        plus.webview.open(this.linkData.dappUrl,'window',{top:this.$refs.header.clientHeight+'px',bottom:0,zindex:0,
-            progress:{
-				color:'#2364bc'
-            } 
-        }); 
+        // plus.webview.open(this.linkData.dappUrl,'window',{top:this.$refs.header.clientHeight+'px',bottom:0,zindex:0,
+        //     progress:{
+		// 		color:'#2364bc'
+        //     } 
+        // }); 
         
     },
     beforeDestroy(){
@@ -74,15 +74,14 @@ export default {
         //     this.$toast('复制成功');
         //     this.operation_show = false
         // },
-        collectionDapp(){  console.log(this.bookmark)
-            // plus.webview.show('window')
+        collectionDapp(){ 
             if(this.isCollet){
                 let index = this.bookmark.findIndex(n => n.dappId === this.linkData.dappId);
                 this.bookmark.splice(index,1)
-                plus.nativeUI.toast('已取消收藏');
+                // plus.nativeUI.toast('已取消收藏');
             }else{
-                plus.nativeUI.toast('已收藏');
                 this.bookmark.push(this.linkData)
+                // plus.nativeUI.toast('已收藏');
             }
             this.public_js.SetStorage('bookmark',this.bookmark)
             this.operation_show = false

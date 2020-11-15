@@ -10,11 +10,11 @@
     </div>
     <div class="prompt-main">
         
-      <div class="prompt-word" v-for="(item,index) in confirm_wordList" :key="index" @click="confirm_wordList.splice(index,1)">{{item}}</div>
+      <div class="prompt-word" v-for="(item,index) in confirm_wordList" :key="index" @click="confirm_wordList.splice(index,1);confirmArr.splice(index,1)">{{item}}</div>
         
     </div>
     <div class="prompt-wordlist">
-        <div class="prompt-word" :style="{'opacity':confirm_wordList.includes(item)?'0.5':'1'}" v-for="(item,index) in wordList" :key="index" @click="checkWord(item)">{{item}}</div>
+        <div class="prompt-word" :style="{'opacity':confirmArr.includes(index)?'0.5':'1'}" v-for="(item,index) in wordList" :key="index" @click="checkWord(item,index)">{{item}}</div>
     </div>
     <van-button type="info" class="btn" :disabled="wordList.length != confirm_wordList.length" @click="finshClick">完成</van-button>
   </div>
@@ -30,7 +30,8 @@ export default {
       value: "",
       wordList:[],
       confirm_wordList:[],
-      validation_wordList:[]
+      validation_wordList:[],
+      confirmArr:[],
     };
   },
   components: {
@@ -61,13 +62,17 @@ export default {
         this.$toast.success('助记词确认完成')
         this.$router.go(-3) 
       }else{
-        this.$toast('助记词顺序不正确')
+        this.$toast({
+          message: '助记词顺序不正确',
+          icon: 'cross',
+        });
       }
       
     },
-    checkWord(item){
-      if(!this.confirm_wordList.includes(item)){
+    checkWord(item,index){
+      if(!this.confirmArr.includes(index)){
         this.confirm_wordList.push(item);
+        this.confirmArr.push(index);
       }
     }
   }

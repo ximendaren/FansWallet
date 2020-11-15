@@ -13,10 +13,10 @@
                 icon="location-o"
                 label-class="label-class"
                 class="token-cell"
-                @click="toggle(index)"
+                @click="toggle(item,index)"
                 >
                 <template #right-icon>
-                    <van-checkbox :name="item.name" :disabled="item.name=='ETH'"  ref="checkboxes" />
+                    <van-checkbox :name="item.name" :disabled="!item.state"  ref="checkboxes" />
                 </template>
                 <template #icon>
                     <img class="token-img" :src="item.logo">
@@ -41,8 +41,11 @@ export default {
     data(){
         return{
             tokenList: [
-                { logo:require('@/assets/images/token_logo/ETH.png'),name:'ETH',fullName:'Ethereum' },
-                { logo:require('@/assets/images/token_logo/BTC.png'),name:'BTC',fullName:'Bitcoin' },
+                { logo:require('@/assets/images/token_logo/ETH.png'),name:'ETH',state:false,fullName:'Ethereum' },
+                { logo:require('@/assets/images/token_logo/BTC.png'),name:'BTC',state:true,fullName:'Bitcoin' },
+                { logo:require('@/assets/images/token_logo/TRX.png'),name:'TRX',state:false,fullName:'TRON' },
+                { logo:require('@/assets/images/token_logo/NEO.png'),name:'NEO',state:false,fullName:'Neo' },
+                { logo:require('@/assets/images/token_logo/EOS.png'),name:'EOS',state:false,fullName:'EOS' },
             ],
             tokenResult: ['ETH'],
             newWallet:{},
@@ -52,8 +55,8 @@ export default {
         this.newWallet = this.$route.params.data;  
     },
     methods: {  
-        toggle(index) {
-            if(index==0){
+        toggle(item,index) {
+            if(!item.state){
                 return
             }
             this.$refs.checkboxes[index].toggle();

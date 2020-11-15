@@ -11,7 +11,6 @@
         <div class="collection">
             <p>
                 <span>收藏</span>
-                <!-- <span>全部 <van-icon name="arrow" /></span> -->
             </p>
             <div class="no-data" v-if="bookmark.length === 0">
                 <img src="@/assets/images/nav_logo/no-data.png" alt=""><br>
@@ -171,6 +170,9 @@ export default {
         text-overflow: ellipsis;
         white-space: nowrap;
         width: 80px;
+    }
+    /deep/.van-grid-item__content {
+        padding: 4.27vw 0;
     }
   }
   .recommend{

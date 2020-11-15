@@ -1,7 +1,7 @@
 <template>
     <div class="container-dapp">
         <pageheader></pageheader>
-        <van-tabs color="#2364bc" v-model="typeActive" animated swipeable> 
+        <van-tabs color="#2364bc" v-model="typeActive" animated swipeable @change="changeType"> 
             <van-tab v-for="(item,index) in importType" :title="item.title" :key="index">
                 <div class="import-content" v-show="index==0">
                    <p class="tips">使用助记词导入的同时可以修改钱包密码。</p>
@@ -80,6 +80,7 @@
 <script>
 import pageheader from '@/components/pageheader'
 import {importWallet} from '@/api/mycenter/wallet'
+import { created_wallet } from "@/api/wallet"
 import CryptoJS from 'crypto-js'
 export default {
     components:{pageheader},
@@ -144,6 +145,16 @@ export default {
         }
     },
     methods:{
+        changeType(){
+            this.wordText='';
+            this.keystoreText='';
+            this.privatekeyText='';
+            this.password='';
+            this.ag_password='';
+            this.remark='';
+            this.walletName='';
+            this.keyStorePassword='';
+        },
         async start_import(item){  
             if(this.typeActive!=1){
                 if(this.password.length <6){
@@ -160,6 +171,12 @@ export default {
                     return
                 }
             }
+            this.$toast.loading({
+                duration: 0, // 持续展示 toast
+                forbidClick: true,
+                loadingType: 'spinner',
+                message: '导入中...',
+            });
             if(this.walletToken === 'ETH'){ 
                 var ethers = require('ethers');
                 var wallet;
@@ -170,23 +187,43 @@ export default {
                 // var wallet1=new ethers.Wallet("0x10814c591400f864824a8f535524e6afea5134b349370174556a50c648e63329");
                 switch (this.typeActive) {
                     case 0:   //助记词
-                        wallet= ethers.Wallet.fromMnemonic(this.wordText);
+                        if(this.wordText.trim().split(' ').length != 12){
+                            this.$toast('助记词格式不正确')
+                            return
+                        }
+                        try{
+                            wallet= ethers.Wallet.fromMnemonic(this.wordText)
+                        }
+                        catch{
+                            this.$toast.clear();
+                            this.$toast('无效的助记词')
+                            return
+                        }
                         mnemonicWords = CryptoJS.AES.encrypt(this.wordText, CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
                             mode: CryptoJS.mode.ECB,
                             padding: CryptoJS.pad.Pkcs7
-                        });
+                        })
+
                         break;
                     case 1:  //keystore
                         await ethers.Wallet.fromEncryptedJson(this.keystoreText, this.keyStorePassword).then((res) => {
                             wallet = res;
                         }).catch(err => {
-                            this.$toast('keyStore密码错误')
+                            this.$toast.clear();
+                            this.$toast('keyStore或keyStore密码错误')
                             return
                         });
                         keystore = this.keystoreText;
                         break;
                     case 2:   //私钥
-                        wallet = new ethers.Wallet(this.privatekeyText);
+                        try{
+                            wallet = new ethers.Wallet(this.privatekeyText)
+                        }
+                        catch{
+                            this.$toast.clear();
+                            this.$toast('无效的私钥')
+                            return
+                        }
                         break;
                 
                     default:
@@ -195,13 +232,11 @@ export default {
 
                 // console.log(walletInfo ,'===', wallet.address )
                 if(walletInfo.some(n => n.address ===  wallet.address )){
-                    this.$dialog.alert({
-                    message: '已有该钱包，请勿重复创建',
-                    }).then(() => {
-                    // on close
-                    });
+                    this.$toast.clear();
+                    this.$toast('已有该钱包，请勿重复创建')
                     return
                 }
+
        
                 // 'shine dog venue hand question scan hero tennis room victory chimney tower'
 
@@ -213,15 +248,10 @@ export default {
                 // keystore
                 if(this.typeActive != 1){
                     var wk = new ethers.Wallet(wallet.privateKey);
-                    this.$toast.loading({
-                        duration: 0, // 持续展示 toast
-                        forbidClick: true,
-                        loadingType: 'spinner',
-                        message: '导入中...',
-                    });
+
                     await wk.encrypt(this.password,percent=>{}).then(res => {
                         keystore = res
-                        this.$toast.clear();
+                        
                     }).catch(err => {
                         this.$toast('创建失败')
                         this.$toast.clear();
@@ -234,7 +264,7 @@ export default {
                         item.isMain = 0
                     })
                 }
-               
+                this.createdWallet('ETH',wallet.address)
                 assetsToken = [{
                     address:wallet.address,
                     contractAddress:'',
@@ -276,7 +306,7 @@ export default {
                 //     mode: CryptoJS.mode.ECB,
                 //     padding: CryptoJS.pad.Pkcs7
                 // });
-
+                this.createdWallet('ETH',btcWallet.address)
                     assetsToken = [{
                         address:btcWallet.address,
                         tokenLogo:'',
@@ -311,13 +341,26 @@ export default {
 
                 });
             }
-
             setTimeout(() => {
+                this.$toast.clear();
                 this.public_js.SetStorage('walletInfo',walletInfo)
                 this.$router.push('wallet')
                 this.$toast.clear();
             },30)
 
+        },
+        createdWallet(ChainCode,Address){   
+            let params = {
+                ChainCode:ChainCode,
+                Address:Address
+            }
+            created_wallet(params).then(res => {
+                if(res.code === 0){
+                    return
+                }else{
+                    this.$toast(res.messages)
+                }
+            })
         },
         isScan(state){
             console.log(state)

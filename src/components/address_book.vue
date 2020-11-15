@@ -29,9 +29,9 @@
     </div>
 </template>
 <script>
-import {get_address_wallet, get_address_book} from '@/api/chaincloud/address_book'
+import {get_address_wallet, get_address_book} from '@/api/chaincloud/address_book' 
 export default {
-    props:['current_address'],
+    props:['walletType'],
     data() {
         return {
             addressWallet_list:[],
@@ -44,33 +44,8 @@ export default {
 
     methods:{
         address_list(){
-            // this.$toast.loading({
-            //     mask: false,
-            //     message: '加载中...',
-            //     duration:600
-            // });
-            this.addressWallet_list = this.public_js.GetStorage('walletInfo')
-            this.addressBook_list = this.public_js.GetStorage('addressBook')
-
-            // get_address_wallet().then(res => {
-            //     if(res.code === 0){
-            //         this.addressWallet_list = res.data.filter(n => n.address != this.current_address)
-            //     }else{
-            //         this.$toast(res.messages);
-            //     }
-            // }).catch(err => {
-            //     this.$toast('网络异常');
-            // })
-
-            // get_address_book().then(res => {
-            //     if(res.code === 0){
-            //         this.addressBook_list = res.data.filter(n => n.walletAddress != this.current_address)
-            //     }else{
-            //         this.$toast(res.messages);
-            //     }
-            // }).catch(err => {
-            //     this.$toast('网络异常');
-            // })
+            this.addressWallet_list = this.public_js.GetStorage('walletInfo').filter(n => n.walletType === this.walletType)
+            this.addressBook_list = this.public_js.GetStorage('addressBook').filter(n => n.addressType === this.walletType)
         },
         select_address(item){
             this.$emit('transfer_address',item)
