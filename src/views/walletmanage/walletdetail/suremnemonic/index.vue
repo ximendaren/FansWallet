@@ -3,7 +3,7 @@
     <Pageheader />
     <div class="prompt-top">
       <div class="prompt-img">
-        <img src="../../../../assets/images/wallet/1569727543(1).jpg" />
+        <img src="@/assets/images/wallet/1569727543(1).jpg" />
       </div>
       <p class="prompt-title">确认助记词</p>
       <p class="prompt-desc">请按顺序点击助记词，以确认你正确的备份</p>
@@ -21,7 +21,7 @@
 </template>
 <script>
 import CryptoJS from "crypto-js";
-import Pageheader from "../../../../components/pageheader";
+import Pageheader from "@/components/pageheader";
 export default {
   data() {
     return {

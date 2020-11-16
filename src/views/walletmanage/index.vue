@@ -70,7 +70,7 @@ export default {
       chekType:'ETH',
     }
   },
-  activated(){
+  created(){
     this.walletInfo = this.walletList = this.public_js.GetStorage('walletInfo');
     this.createWallet_show = false
     this.Popupbox = false

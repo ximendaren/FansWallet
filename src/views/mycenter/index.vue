@@ -43,7 +43,7 @@ export default {
     goWeb(){
       let query = {
           dappName:'chainfans',
-          dappUrl:'https://www.chainfans.io'
+          dappUrl:'https://m.chainfans.io'
       }
       this.$router.push({ path:'/thirdParty',query:{ data:JSON.stringify(query)} })
     },

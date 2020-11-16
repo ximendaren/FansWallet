@@ -20,6 +20,7 @@
 
 <script>
 import pageheader from '@/components/pageheader'
+import CryptoJS from "crypto-js";
 export default {
     components:{ pageheader },
     data(){
@@ -28,8 +29,15 @@ export default {
         }
     },
     created(){
-        this.mnemonic = this.public_js.GetStorage('walletInfo')[0].mnemonic.split(' ')
-        console.log(this.mnemonic)
+    this.mnemonic = this.public_js.GetStorage('walletInfo').find(n => n.isMain).mnemonic
+    
+    var encryptedHexStr = CryptoJS.enc.Hex.parse(this.mnemonic);
+    var encryptedBase64Str = CryptoJS.enc.Base64.stringify(encryptedHexStr);
+    var decryptedData = CryptoJS.AES.decrypt(encryptedBase64Str,  CryptoJS.enc.Utf8.parse("8NONwyJtHesysWpM"), {
+        mode: CryptoJS.mode.ECB,
+        padding: CryptoJS.pad.Pkcs7
+    });
+    this.mnemonic = decryptedData.toString(CryptoJS.enc.Utf8).split(' ');
     },
     methods:{
 

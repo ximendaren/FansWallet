@@ -6,7 +6,7 @@
             <div class="operation">
                 <van-icon class="icon" v-if="linkData.dappId&&isCollet" :name="require('@/assets/images/icon/collet-a.png')" @click="collectionDapp"  />
                 <van-icon class="icon" v-if="linkData.dappId&&!isCollet" :name="require('@/assets/images/icon/collet.png')" @click="collectionDapp"  />
-                <van-icon class="icon" v-if="!linkData.dappId" :name="require('@/assets/images/icon/refresh.png')" @click="$router.go(0)"  />
+                <van-icon class="icon" v-if="!linkData.dappId" :name="require('@/assets/images/icon/refresh.png')" @click="refresh()"  />
                 <van-icon class="icon" name="close" @click="$router.back()" />
             </div>
         </div>
@@ -45,14 +45,14 @@ export default {
         }
     },
     mounted(){
-        this.linkData = JSON.parse(this.$route.query.data);console.log(this.linkData)
+        this.linkData = JSON.parse(this.$route.query.data);
         this.title = this.linkData.dappUrl
         this.bookmark = this.public_js.GetStorage('bookmark') || []
-        // plus.webview.open(this.linkData.dappUrl,'window',{top:this.$refs.header.clientHeight+'px',bottom:0,zindex:0,
-        //     progress:{
-		// 		color:'#2364bc'
-        //     } 
-        // }); 
+        plus.webview.open(this.linkData.dappUrl,'window',{top:this.$refs.header.clientHeight+'px',bottom:0,zindex:0,
+            progress:{
+				color:'#2364bc'
+            } 
+        }); 
         
     },
     beforeDestroy(){
@@ -64,24 +64,28 @@ export default {
         }
     },
     methods:{
+        refresh(){
+            plus.webview.close( 'window' );
+            plus.webview.open(this.linkData.dappUrl,'window',{top:this.$refs.header.clientHeight+'px',bottom:0,zindex:0,
+                progress:{
+                    color:'#2364bc'
+                } 
+            });
+        },
         onCopy(e) {
             plus.nativeUI.toast('已复制链接');
         },
         operation(){
             this.operation_show=true;
         },
-        // copyUrl(e){
-        //     this.$toast('复制成功');
-        //     this.operation_show = false
-        // },
         collectionDapp(){ 
             if(this.isCollet){
                 let index = this.bookmark.findIndex(n => n.dappId === this.linkData.dappId);
                 this.bookmark.splice(index,1)
-                // plus.nativeUI.toast('已取消收藏');
+                plus.nativeUI.toast('已取消收藏');
             }else{
                 this.bookmark.push(this.linkData)
-                // plus.nativeUI.toast('已收藏');
+                plus.nativeUI.toast('已收藏');
             }
             this.public_js.SetStorage('bookmark',this.bookmark)
             this.operation_show = false

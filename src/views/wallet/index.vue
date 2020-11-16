@@ -8,7 +8,7 @@
         
         <van-pull-refresh v-model="isLoading" @refresh="walletData()" :disabled="scrollTop>0">
         <div class="bg-box" ref="bgBox">
-            <div class="wallet-box">
+            <div class="wallet-box" ref="wallet">
                 <div class="info-box">
                     <div class="info-left">
                         <p class="wallet-name">{{walletInfo?walletInfo.walletName:''}}
@@ -32,15 +32,15 @@
                     <span @click="goTransfer"><van-icon :name="require('@/assets/images/wallet/transfer.png')" size="20" />&nbsp;转账</span>
                 </div>
             </div>
-            <p class="assets van-hairline--bottom">
+            <p class="assets van-hairline--bottom" ref="assets">
                 <span><b>资产</b></span>
                 <van-icon v-if="walletInfo.walletType === 'ETH'" name="add-o" class="add-ico" @click="$router.push({path:'/add_assets',query:{walletType:walletInfo.walletType,address:walletInfo.address}})" />
             </p>
 
-            <div class="token-list" @scroll="scroll">
+            <div class="token-list" ref="tokenBox" @scroll="scroll">
                 <div class="token-box van-hairline--bottom" v-for="(item,index) in walletInfo?walletInfo.assetsToken:''" :key="index"  @click="select_assets(item,index)">
                     <van-swipe-cell :disabled="item.tokenProtocol=='Main'">
-                        <van-cell center>
+                        <van-cell center :border="false">
                             <template slot="title" center> 
                                 <div class="left-logo"> 
                                     <div class="left-img">
@@ -63,11 +63,14 @@
                     
                 </div>
             </div>
+        </div>
 
 
+
+        </van-pull-refresh>
+        <div class="space-box" ref="space">
 
         </div>
-        </van-pull-refresh>
 
         <!-- 地址二维码 -->
         <van-popup v-model="is_showQr" class="qr-box">
@@ -176,22 +179,24 @@ export default {
         this.timer = null
     },
     mounted(){
-        this.$refs.bgBox.style.height = window.screen.height- this.$refs.header.clientHeight-50-parseInt(this.$store.state.appTop)+'px'
+        // this.$refs.bgBox.style.height = window.screen.height- this.$refs.header.clientHeight-50-parseInt(this.$store.state.appTop)+'px';
+        this.$refs.tokenBox.style.height = window.screen.height- this.$refs.space.clientHeight -parseInt(this.$store.state.appTop)+'px';
+
     },
     methods:{
-        chainInfo(){
-            clearInterval(this.timer)
-            get_chainInfo({ChainCode:this.walletInfo.walletType}).then(res => {
-                if (res.code === 0) {
-                    this.$store.commit('blockNumber',res.data.lastBlockNumber)
-                } else {
-                    this.$toast(res.data.messages);
-                }
-            })
-            .catch(err => {
-                this.$toast("网络异常");
-            });
-        },
+        // chainInfo(){
+        //     clearInterval(this.timer)
+        //     get_chainInfo({ChainCode:this.walletInfo.walletType}).then(res => {
+        //         if (res.code === 0) {
+        //             this.$store.commit('blockNumber',res.data.lastBlockNumber)
+        //         } else {
+        //             this.$toast(res.data.messages);
+        //         }
+        //     })
+        //     .catch(err => {
+        //         this.$toast("网络异常");
+        //     });
+        // },
         scroll(event){
             this.scrollTop = event.target.scrollTop
         },
@@ -219,7 +224,7 @@ export default {
         select_assets(item,index){
             item.tokenIndex = index;
             item.address = this.walletInfo.address;
-            this.$router.push({path:'/wallet_detail',query:{walletInfo:JSON.stringify(item)}})
+            this.$router.push({path:'/wallet_detail',query:{walletInfo:JSON.stringify(item)}})  
         },
          //获取钱包数据
         walletData(){
@@ -257,11 +262,11 @@ export default {
                     })
                      this.totalPriceCny = totalPrice;
 
-                    // let data = this.public_js.GetStorage('walletInfo');  
-                    // let i = data.findIndex(n => n.isMain === 1);
-                    // data[i] = this.walletInfo
+                    let data = this.public_js.GetStorage('walletInfo');  
+                    let i = data.findIndex(n => n.isMain === 1);
+                    data[i] = this.walletInfo
 
-                    // this.public_js.SetStorage('walletInfo',data);
+                    this.public_js.SetStorage('walletInfo',data);
                     
                 }else{
                     this.$toast(res.messages)
@@ -370,6 +375,7 @@ export default {
 .container-nav{
     // height: calc(100vh-44px);
     height: 100%;
+    position: relative;
   .header{
     display: flex;
     justify-content: space-between;
@@ -388,7 +394,7 @@ export default {
         width: 355px;
         height: 150px;
         background: url('../../assets/images/other/walletBg.png') 100%;
-        margin: 6px auto;
+        margin: 5px auto;
         border-radius: 13px;
         color: #fff;
         font-size: 16px;
@@ -487,9 +493,9 @@ export default {
     }
     .token-list{
         // height: calc(100vh - 290px);
-        // overflow-y: auto;
+        overflow-y: scroll;
         .token-box{
-
+            // border-bottom: 1px solid #eee;
             .left-logo{
                 display: flex;
                 align-items: center;
@@ -622,6 +628,10 @@ export default {
             overflow-y: auto;
             }
         }
+    }
+    .space-box{
+        height: 286px;
+        position: absolute;
     }
 }
 </style>

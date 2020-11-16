@@ -437,7 +437,7 @@ const routes = [
   {
     path: '/walletmanage',
     name: 'walletmanage',
-    meta:{keepAlive: true,headline:'钱包管理'},
+    meta:{headline:'钱包管理'},
     component: () => import('@/views/walletmanage/index'),
   },
   {
