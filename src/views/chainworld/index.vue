@@ -1,7 +1,8 @@
 <template>
   <div class="chainworld">
-    <div class="navBg"></div>
-    <van-tabs v-model="world_active" class="reset" :style="{top:parseInt($store.state.appTop)+'px'}" sticky color="#2364bc">
+    <div class="null" ref="tabs"></div>
+    <div class="navBg" :style="{height:parseInt($store.state.appTop)+'px'}"></div>
+    <van-tabs v-model="world_active" class="reset" :style="{top:parseInt($store.state.appTop)+'px'}" :offset-top="parseInt($store.state.appTop)+'px'" sticky color="#2364bc">
       <van-tab title="行情">
         <!-- <van-tabs v-model="quotation_active" @click="quotationActive()"  color="#2364bc"> -->
           <!-- <van-tab title="关注">
@@ -19,7 +20,7 @@
           >  
             <div class="quotation">
               <div class="q-box"></div>
-              <div class="q-title" :style="{ top:parseInt($store.state.appTop)+44 +'px' }">
+              <div class="q-title" :style="{ top:parseInt($store.state.appTop)+tabHeight +'px' }">
                 <span>币种</span>
                 <span>最新价</span>
                 <span>24H涨幅</span>
@@ -31,9 +32,9 @@
                 <div class="q-module" v-for="(item,index) in quotation_data" :key="index">
                     <span>
                       <div class="ranking" :style="{'background':item.rank<4?'#2364bc':'d6d6d6'}"> {{item.rank}} </div>
-                      <div class="token-logo">
+                      <!-- <div class="token-logo">
                         <img :src="item.logoUrl">&nbsp;
-                      </div>
+                      </div> -->
                       <div class="token-title">
                         <p>{{item.symbol}}</p>
                         <p>{{availableCny(item.availableCny)}}</p>
@@ -70,7 +71,11 @@
           >
           <div class="news-box">
               <div class="fast_news" v-for="(item,index) in fastNews_data" :key="index">
-                <p class="f-time">{{ item.publishTime }} {{ item.mediaName }}</p>
+                <p class="f-time">
+                  
+                  <span>{{ item.publishTime }} {{ item.mediaName }}</span>
+                  <span><van-icon :name="require('@/assets/images/other/share.png')" class="share" @click="screenShot(item)" /></span>
+                  </p>
                 <p class="f-title">{{ item.title }}</p>
                 <p class="f-content">{{ item.content }}</p>
                 <p class="f-comment">              
@@ -86,9 +91,12 @@
 
                 <p class="f-important">
                   <van-rate v-model="item.starLevel" readonly size="16px" gutter="2px" />
+                  
                 </p>
               </div>
           </div>
+
+
           </van-list>
 
         </van-pull-refresh>
@@ -108,11 +116,41 @@
 
       </van-tab> -->
     </van-tabs>
+
+    <!-- <van-overlay :show="false" @click="showShare = false"> -->
+      <div class="snapshot" v-show="showShare" ref="imageToFile" @click.stop>
+        <div class="header">
+          <img src="@/assets/images/my_center/logo.png" alt=""> 
+          <div>
+            <p>
+              <span><b>FansWallet</b></span>
+              <span>&nbsp;•&nbsp;闪讯</span>
+            </p>
+            <p class="slogan">实时掌握区块链动态</p>
+          </div>
+        </div>
+        <div class="s-content">
+          <p class="time"> <van-icon name="underway-o" />&nbsp;{{ shareData.publishTime }} &nbsp; {{ shareData.mediaName }}   </p>
+          <div class="title"><b>{{ shareData.title }}</b> </div>
+          <div class="text">{{ shareData.content }}</div>
+        </div>  
+        <div class="s-foot">
+          <img src="@/assets/images/other/guanwang.png" alt="">
+          <div>
+            <p>扫码下载 <b>FansWallet</b> APP</p>
+            <p class="present">迷链科技提供专业数字钱包解决方案</p>
+          </div>
+        </div>
+      </div>
+    <!-- </van-overlay> -->
+
+
   </div>
 </template>
 <script>
 import {get_fastNewsList, isNewslike} from '@/api/chainworld/fastNews'
 import {get_quotationList} from '@/api/chainworld/quotation'
+import html2canvas from 'html2canvas';
 export default {
   name:'chainworld',
   data() {
@@ -137,16 +175,116 @@ export default {
         {title:'似乎每一次比特币大涨大跌的背后，都有一只“巨鲸”在出没',img:require('@/assets/images/information_img/2483098_small.jpg'),PublisherName:'链内参',PublisherTime:'2019-10-15',url:'https://m.jinse.com/blockchain/495104.html'},
         {title:'Telegram推迟TON启动 投资者可以收回“约77%”资金',img:require('@/assets/images/information_img/2482812_small.jpg'),PublisherName:'区块链新金融',PublisherTime:'2019-10-14',url:'https://m.jinse.com/blockchain/495022.html'},
         {title:'全面理性分析，Hetbi助您树立正确投资策略',img:require('@/assets/images/information_img/cbebeb5553ba4e7ea9a039c75c0ca2eb.jpg'),PublisherName:'海特币',PublisherTime:'2019-10-14',url:'https://m.feixiaohao.com/news/4922348.html'},
-      ]
+      ],
+
+      showShare: false, 
+      shareImg:'',
+      filename:'',
+      shareData:{},
+      tabHeight:0
     };
   },
   created(){
-    // if(this.quotation_data.length == 0){
-    //   this.quotationRefresh()
-    // }
+    if(this.quotation_data.length == 0){
+      this.quotationRefresh()
+    }
   },
-
+  mounted(){
+    this.tabHeight = this.$refs.tabs.clientHeight
+  },
   methods:{
+    share_img(){  
+      plus.share.sendWithSystem({type:'image',pictures:["_doc/" + this.filename],}, () => {
+        console.log('分享成功');
+        // this.showShare = false;
+      }, (e) => {
+        console.log('分享失败：'+JSON.stringify(e));
+        // this.showShare = false;
+      });
+
+    },
+    //生成快照
+    screenShot(item) {
+      this.shareData = item; 
+      var showToast = true
+      this.showShare = true;
+      this.filename = "pic.png";
+      this.share_img()
+
+        // this.$toast.loading({
+        //     message: '加载中',
+        //     forbidClick: true,
+        //     duration: 0,
+        //     mask:true,
+            
+        // });  
+        setTimeout(()=>{
+        var shareContent = this.$refs.imageToFile;//需要截图的包裹的（原生的）DOM 对象
+        var width = shareContent.offsetWidth; //获取dom 宽度
+        var height = shareContent.offsetHeight; //获取dom 高度
+        var canvas = document.createElement("canvas"); //创建一个canvas节点
+        var scale = window.devicePixelRatio; //定义任意放大倍数 支持小数
+        //   var scale = 2; //定义任意放大倍数 支持小数
+        canvas.width = width * scale; //定义canvas 宽度 * 缩放
+        canvas.height = height * scale; //定义canvas高度 *缩放
+        canvas.style.width = width + "px";
+        canvas.style.height = height + "px";
+        canvas.getContext("2d").scale(scale,scale);
+
+        html2canvas(this.$refs.imageToFile, {
+        // width: this.$refs.imageToFile.clientWidth,
+        // height: this.$refs.imageToFile.clientHeight,
+        scale: 1,
+        useCORS: true,
+        // dpi: window.devicePixelRatio * 4,
+        canvas:canvas,    
+        backgroundColor:'#f7f8fa00',
+
+        }).then((canvas) => {// 第一个参数是需要生成截图的元素,第二个是自己需要配置的参数,宽高等
+            // this.$toast.clear()
+            this.shareImg = canvas.toDataURL('image/png'); 
+            if(!window.plus)return
+            var bitmap = new plus.nativeObj.Bitmap();
+            
+            bitmap.loadBase64Data(this.shareImg);
+            // 保存Bitmap图片
+            bitmap.save(
+                "_doc/" + this.filename,
+                { overwrite: true },
+                function(i) {
+                //保存到系统相册
+                  plus.gallery.save(
+                    i.target,
+                    function(d) {
+                    //销毁Bitmap图片
+                    bitmap.clear();
+                    if (showToast) {
+                        console.log("保存图片到相册成功");
+                        
+                    }
+                    // vm.toShare("");
+                    },
+                    function() {
+                    //销毁Bitmap图片
+                    bitmap.clear();
+                    if (showToast) {
+                        console.log("保存保存失败");
+                    }
+                    // vm.toShare("");
+                    }
+                  );
+                },
+                function() {
+                  bitmap.clear();
+                }
+            );
+            
+
+        })
+
+        })
+    },
+
     //  行情
     quotationRefresh() {
         this.isLoading = false;
@@ -176,13 +314,16 @@ export default {
       get_quotationList(params).then(res => {
         this.$toast.clear();
         if(res.code === 0){
-          if(start==0){
+          if(start==0 && res.data.length){
             this.quotation_data =res.data
           }else{
             this.quotation_data = this.quotation_data.concat( res.data)
           }
+          if(this.quotation_data.length === 0){
+            this.quotationList(0)
+          }
           this.loading = false;
-          if(res.data.length<20){
+          if(res.data.length<20 && res.data.length != 0 ){
             this.finished = true;
           }
         }else{
@@ -208,13 +349,17 @@ export default {
       let params = {
         PageCount:10,
         GetType:GetType,
-        PagingParams:this.fastNews_data.length?this.fastNews_data[this.fastNews_data.length-1].publishTime:''
+        PagingParams:this.fastNews_data.length?this.fastNews_data[this.fastNews_data.length-1].publishTime:'',
+        UserId:this.public_js.GetStorage('uuId') || 1
       }
       get_fastNewsList(params).then(res => {
         this.loading = false;
         if(res.code === 0){
-          this.fastNews_data = this.fastNews_data.concat(res.data);
-          if (this.fastNews_data.length >= res.dataPagingResult.totalCount) {
+          if(res.data.length === 0){
+            this.fastNewsList();
+          }
+          this.fastNews_data = this.fastNews_data.concat(res.data); 
+          if (this.fastNews_data.length >= res.totalCount) {
             this.finished = true;
           }
 
@@ -226,13 +371,14 @@ export default {
       })
     },
     stick(item,likeState){  //赞
-      if(item.likeState != 0){
+      if(item.likeState != 0){ 
         this.$toast('已点评过');
         return
       }
       let params = {
         RecordId:item.id,
-        LikeState:likeState
+        LikeState:likeState,
+        UserId:this.public_js.GetStorage('uuId') || 1
       }
       isNewslike(params).then(res => {
         if(res.code === 0){
@@ -279,19 +425,23 @@ export default {
 .chainworld {
   background: #fff;
   font-size: 14px;
+  .null{
+    height: 43.5px;
+    width: 0;
+  }
   .follow{
     text-align: center;
     color: #c9c9c9;
     margin: 20px 0;
   }
-  // .navBg{
-  //   position: fixed;
-  //   top: 0px;
-  //   width: 100%;
-  //   height: 70px;
-  //   background: #fff;
-  //   z-index: 2;
-  // }
+  .navBg{
+    position: fixed;
+    top: 0px;
+    width: 100%;
+    // height: 70px;
+    background: #fff;
+    z-index: 1;
+  }
   .reset{
     width: 100%;
     position: absolute;
@@ -301,7 +451,7 @@ export default {
   .quotation{
     // margin-top: 15px;
     .q-box{
-      height: 16px;
+      height: 30px;
       background: #fff;
     }
     .q-title{
@@ -418,6 +568,13 @@ export default {
     .f-time{
       color: #949494;
       font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      .share{
+        font-size: 15px;
+        margin-right: 5px;
+        color: #666;
+      }
     }
     .f-title{
       font-size: 16px;
@@ -495,9 +652,74 @@ export default {
       }
 
   }
-
+  .snapshot{
+    position: fixed;
+    top: 1000px;
+    left: 50%;
+    z-index: 99999;
+    transform: translate(-50%);
+    width: 320px;
+    // height: 400px;
+    background: #fff;
+    .header{
+      height: 100px;
+      background: rgb(4, 103, 231);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 18px;
+      color: #fff;
+      img{
+        width: 60px;
+        height: 60px;
+        border-radius: 5px;
+        margin-right: 25px;
+      }
+      .slogan{
+        font-size: 14px;
+        color: #eee;
+      }
+    }
+    .s-content{
+      padding: 15px 15px;
+      min-height: 260px;
+      background: #fff;
+      .time{
+        font-size: 13px;
+        color: #949494;
+        display: flex;
+        align-items: center;
+      }
+      .title{
+        margin: 10px 0;
+        font-size: 16px;
+      }
+      .text{
+        font-size: 15px;
+      }
+    }
+    .s-foot{
+      height: 80px;
+      background: rgb(250, 248, 248);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 15px;
+      img{
+        width: 60px;
+        height: 60px;
+        margin-right: 15px;
+      }
+      .present{
+        font-size: 12px;
+        color: #666;
+      }
+    }
+  }
 
 }
 
-
+/deep/.van-overlay{
+  z-index: 9999;
+}
 </style>
